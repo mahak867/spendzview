@@ -1,0 +1,35 @@
+{
+  "manifest_version": 3,
+  "name": "SpendSense Pro",
+  "version": "1.0.0",
+  "description": "Quick-add expenses to SpendSense Pro from any web page",
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "SpendSense Pro — Quick Add",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "permissions": ["storage", "activeTab"],
+  "host_permissions": ["http://localhost:3000/*", "https://*.spendsense.app/*"],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://www.amazon.in/*", "*://www.flipkart.com/*", "*://www.swiggy.com/*", "*://www.zomato.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
