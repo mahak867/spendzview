@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SpendSense Pro — Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<!-- SIDEBAR -->
+<aside id="sidebar">
+  <div class="sidebar-logo">
+    <div class="flex items-center gap-3">
+      <div class="sidebar-logo-icon">💰</div>
+      <div>
+        <div class="font-bold text-white text-sm leading-tight">SpendSense Pro</div>
+        <div class="text-xs text-slate-500">Finance Intelligence</div>
+      </div>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-item active" data-section="dashboard"><span class="nav-icon">📊</span>Dashboard</div>
+    <div class="nav-item" data-section="expenses"><span class="nav-icon">💸</span>Expenses</div>
+    <div class="nav-item" data-section="budget"><span class="nav-icon">🎯</span>Budget</div>
+    <div class="nav-item" data-section="bills"><span class="nav-icon">🧾</span>Bills</div>
+    <div class="nav-item" data-section="subscriptions"><span class="nav-icon">🔄</span>Subscriptions</div>
+    <div class="nav-item" data-section="shopping"><span class="nav-icon">🛍️</span>Shopping</div>
+    <div class="nav-item" data-section="travel"><span class="nav-icon">✈️</span>Travel</div>
+    <div class="nav-item" data-section="health"><span class="nav-icon">🏥</span>Health</div>
+    <div class="nav-item" data-section="education"><span class="nav-icon">📚</span>Education</div>
+    <div class="nav-item" data-section="insurance"><span class="nav-icon">🛡️</span>Insurance</div>
+    <div class="nav-item" data-section="savings"><span class="nav-icon">��</span>Savings</div>
+    <div class="nav-item" data-section="banking"><span class="nav-icon">🏛️</span>Banking</div>
+    <div class="nav-item" data-section="upi"><span class="nav-icon">📱</span>UPI Payments</div>
+    <div class="nav-item" data-section="deepsearch"><span class="nav-icon">🔍</span>DeepSearch AI</div>
+    <div class="nav-item" data-section="reports"><span class="nav-icon">📈</span>Reports</div>
+    <div class="nav-item" data-section="settings"><span class="nav-icon">⚙️</span>Settings</div>
+  </nav>
+  <div class="sidebar-user">
+    <div class="flex items-center gap-3">
+      <div class="sidebar-user-avatar" id="sidebarUserAvatar">U</div>
+      <div class="min-w-0">
+        <div class="font-semibold text-sm text-white truncate-text" id="sidebarUserName">Loading...</div>
+        <div class="text-xs text-slate-500 truncate-text" id="sidebarUserEmail"></div>
+      </div>
+    </div>
+    <button id="logoutBtn" class="mt-3 w-full text-left text-xs text-slate-500 hover:text-red-400 transition-colors flex items-center gap-2 py-1">
+      <span>🚪</span> Sign out
+    </button>
+  </div>
+</aside>
+
+<!-- Mobile overlay -->
+<div id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<!-- MAIN -->
+<div id="mainWrapper">
+  <!-- TOP NAV -->
+  <nav id="topNav">
+    <div class="flex items-center gap-3">
+      <button id="menuToggle" class="btn-icon text-xl" onclick="toggleSidebar()">☰</button>
+      <div class="text-sm text-slate-400" id="breadcrumb">Dashboard</div>
+    </div>
+    <div class="flex items-center gap-3">
+      <div class="relative">
+        <button class="btn-icon text-xl relative" id="notifBell" onclick="toggleNotifDropdown()">
+          🔔
+          <span id="notifBadge" class="hidden absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">0</span>
+        </button>
+        <div id="notifDropdown">
+          <div class="flex items-center justify-between px-4 py-3 border-b border-slate-700">
+            <span class="font-semibold text-sm text-white">Notifications</span>
+            <button onclick="markAllNotifRead()" class="text-xs text-indigo-400 hover:text-indigo-300">Mark all read</button>
+          </div>
+          <div id="notifList" class="max-h-72 overflow-y-auto">
+            <div class="text-center py-6 text-slate-500 text-sm">No notifications</div>
+          </div>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-sm font-bold text-white" id="navUserAvatar">U</div>
+        <span class="text-sm font-medium text-white hidden sm:block" id="navUserName">User</span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- PAGE CONTENT -->
+  <main id="pageContent">
+
+    <!-- ===== DASHBOARD ===== -->
+    <section id="section-dashboard" class="page-section active">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">Dashboard</h2>
+          <p class="section-subtitle">Welcome back! Here's your financial overview.</p>
+        </div>
+        <button class="btn-secondary btn-sm" onclick="refreshDashboard()">↻ Refresh</button>
+      </div>
+      <!-- Summary cards -->
+      <div class="grid-cols-4 mb-5">
+        <div class="stat-card">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-slate-400 text-xs font-medium uppercase tracking-wide">This Month</span>
+            <span class="text-2xl">💸</span>
+          </div>
+          <div class="text-2xl font-bold text-white" id="dashTotalExpenses">₹0</div>
+          <div class="text-xs text-slate-500 mt-1">Total expenses</div>
+        </div>
+        <div class="stat-card">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-slate-400 text-xs font-medium uppercase tracking-wide">Budget Left</span>
+            <span class="text-2xl">🎯</span>
+          </div>
+          <div class="text-2xl font-bold text-emerald-400" id="dashBudgetRemaining">₹0</div>
+          <div class="progress-wrap mt-2"><div class="progress-bar progress-green" id="dashBudgetBar" style="width:0%"></div></div>
+        </div>
+        <div class="stat-card">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-slate-400 text-xs font-medium uppercase tracking-wide">Upcoming Bills</span>
+            <span class="text-2xl">🧾</span>
+          </div>
+          <div class="text-2xl font-bold text-amber-400" id="dashUpcomingBills">0</div>
+          <div class="text-xs text-slate-500 mt-1">Due in 7 days</div>
+        </div>
+        <div class="stat-card">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-slate-400 text-xs font-medium uppercase tracking-wide">Total Saved</span>
+            <span class="text-2xl">🏦</span>
+          </div>
+          <div class="text-2xl font-bold text-violet-400" id="dashSavingsTotal">₹0</div>
+          <div class="text-xs text-slate-500 mt-1" id="dashSavingsGoals">0 goals</div>
+        </div>
+      </div>
+      <!-- Charts row -->
+      <div class="grid-cols-2 mb-5">
+        <div class="chart-card">
+          <h3 class="font-semibold text-sm text-slate-300 mb-3">Spending by Category</h3>
+          <div class="chart-container" style="height:260px"><canvas id="categoryChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h3 class="font-semibold text-sm text-slate-300 mb-3">Daily Spending Trend</h3>
+          <div class="chart-container" style="height:260px"><canvas id="dailyChart"></canvas></div>
+        </div>
+      </div>
+      <!-- Bottom row -->
+      <div class="grid-cols-2-1">
+        <div class="section-card">
+          <div class="flex items-center justify-between px-5 py-3 border-b border-slate-700">
+            <h3 class="font-semibold text-sm text-slate-300">Recent Expenses</h3>
+            <button class="text-xs text-indigo-400 hover:text-indigo-300" onclick="switchSection('expenses')">View all →</button>
+          </div>
+          <table class="data-table" id="recentExpensesTable">
+            <thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Amount</th></tr></thead>
+            <tbody><tr><td colspan="4" class="empty-state"><div class="empty-icon">💸</div>No expenses yet</td></tr></tbody>
+          </table>
+        </div>
+        <div class="section-card">
+          <div class="px-5 py-3 border-b border-slate-700">
+            <h3 class="font-semibold text-sm text-slate-300">Smart Insights</h3>
+          </div>
+          <div class="p-4" id="insightsList">
+            <div class="text-center py-4 text-slate-500 text-sm">Add expenses to see insights</div>
+          </div>
+        </div>
+      </div>
+      <!-- Monthly chart -->
+      <div class="chart-card mt-5">
+        <h3 class="font-semibold text-sm text-slate-300 mb-3">Monthly Overview (Last 12 Months)</h3>
+        <div class="chart-container" style="height:220px"><canvas id="monthlyChart"></canvas></div>
+      </div>
+    </section>
+
+    <!-- ===== EXPENSES ===== -->
+    <section id="section-expenses" class="page-section">
+      <div class="section-header">
+        <div><h2 class="section-title">Expenses</h2><p class="section-subtitle">Track and manage all your spending</p></div>
+        <button class="btn-primary" onclick="openExpenseModal()">+ Add Expense</button>
+      </div>
+      <!-- Filter bar -->
+      <div class="filter-bar mb-4">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+          <input type="text" class="form-input" id="expSearch" placeholder="🔍 Search...">
+          <select class="form-select" id="expCategory">
+            <option value="">All Categories</option>
+            <option>Food</option><option>Transport</option><option>Shopping</option>
+            <option>Bills</option><option>Health</option><option>Education</option>
+            <option>Travel</option><option>Entertainment</option><option>Insurance</option><option>Other</option>
+          </select>
+          <input type="date" class="form-input" id="expDateFrom" placeholder="From date">
+          <input type="date" class="form-input" id="expDateTo" placeholder="To date">
+        </div>
+        <div class="flex flex-wrap gap-3 items-center">
+          <input type="number" class="form-input w-28" id="expAmtMin" placeholder="Min ₹">
+          <input type="number" class="form-input w-28" id="expAmtMax" placeholder="Max ₹">
+          <select class="form-select w-36" id="expPayment">
+            <option value="">All Methods</option>
+            <option>Cash</option><option>Card</option><option>UPI</option><option>Net Banking</option><option>Wallet</option>
+          </select>
+          <button class="btn-primary btn-sm" id="expSearchBtn" onclick="loadExpenses()">Search</button>
+          <button class="btn-secondary btn-sm" onclick="clearExpenseFilters()">Clear</button>
+        </div>
+      </div>
+      <!-- Stats -->
+      <div class="grid-cols-3 mb-4">
+        <div class="stat-card text-center"><div class="text-xl font-bold text-white" id="expTotal">₹0</div><div class="text-xs text-slate-500">Total (filtered)</div></div>
+        <div class="stat-card text-center"><div class="text-xl font-bold text-white" id="expAvgDay">₹0</div><div class="text-xs text-slate-500">Avg per day</div></div>
+        <div class="stat-card text-center"><div class="text-xl font-bold text-white" id="expHighest">₹0</div><div class="text-xs text-slate-500">Highest expense</div></div>
+      </div>
+      <div class="section-card">
+        <div class="table-wrap">
+          <table class="data-table" id="expensesTable">
+            <thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Amount</th><th>Payment</th><th>Tags</th><th>Actions</th></tr></thead>
+            <tbody><tr><td colspan="7" class="empty-state"><div class="empty-icon">💸</div>No expenses found</td></tr></tbody>
+          </table>
+        </div>
+        <div class="flex items-center justify-between px-4 py-3 border-t border-slate-700" id="expPagination">
+          <span class="text-xs text-slate-500" id="expPaginationInfo">0 records</span>
+          <div class="flex gap-2">
+            <button class="btn-secondary btn-sm" id="expPrevBtn" onclick="expChangePage(-1)" disabled>← Prev</button>
+            <button class="btn-secondary btn-sm" id="expNextBtn" onclick="expChangePage(1)" disabled>Next →</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== BUDGET ===== -->
+    <section id="section-budget" class="page-section">
+      <div class="section-header">
+        <div><h2 class="section-title">Budget Management</h2><p class="section-subtitle">Set and track your spending limits</p></div>
+        <button class="btn-primary" onclick="openBudgetModal()">Set Budget</button>
+      </div>
+      <div class="flex items-center gap-3 mb-4">
+        <label class="form-label mb-0">Month:</label>
+        <input type="month" class="form-input w-44" id="budgetMonthPicker" onchange="loadBudgetStatus()">
+      </div>
+      <!-- Overall card -->
+      <div class="stat-card mb-5">
+        <div class="grid-cols-3 mb-4">
+          <div><div class="text-xs text-slate-500 mb-1">Total Budget</div><div class="text-2xl font-bold text-white" id="totalBudget">₹0</div></div>
+          <div><div class="text-xs text-slate-500 mb-1">Total Spent</div><div class="text-2xl font-bold text-red-400" id="totalSpent">₹0</div></div>
+          <div><div class="text-xs text-slate-500 mb-1">Remaining</div><div class="text-2xl font-bold text-emerald-400" id="budgetRemaining2">₹0</div></div>
+        </div>
+        <div class="progress-wrap"><div class="progress-bar progress-green" id="overallBudgetBar" style="width:0%"></div></div>
+        <div class="text-xs text-slate-500 mt-1 text-right" id="overallBudgetPct">0%</div>
+      </div>
+      <div id="categoryBudgets" class="grid-cols-2"></div>
+    </section>
+
+    <!-- ===== BILLS ===== -->
+    <section id="section-bills" class="page-section">
+      <div class="section-header">
+        <div><h2 class="section-title">Bills & Utilities</h2><p class="section-subtitle">Track payments and due dates</p></div>
+        <button class="btn-primary" onclick="openBillModal()">+ Add Bill</button>
+      </div>
+      <div class="grid-cols-4 mb-4">
+        <div class="stat-card text-center"><div class="text-xl font-bold text-red-400" id="billsTotalDue">₹0</div><div class="text-xs text-slate-500">Total Due</div></div>
+        <div class="stat-card text-center"><div class="text-xl font-bold text-emerald-400" id="billsPaidMonth">₹0</div><div class="text-xs text-slate-500">Paid This Month</div></div>
+        <div class="stat-card text-center"><div class="text-xl font-bold text-amber-400" id="billsOverdueCount">0</div><div class="text-xs text-slate-500">Overdue</div></div>
+        <div class="stat-card text-center"><div class="text-xl font-bold text-slate-300" id="billsUpcomingCount">0</div><div class="text-xs text-slate-500">Upcoming (7d)</div></div>
+      </div>
+      <div class="tab-group">
+        <button class="tab-btn-group active" onclick="filterBills('all', this)">All</button>
+        <button class="tab-btn-group" onclick="filterBills('upcoming', this)">Upcoming</button>
+        <button class="tab-btn-group" onclick="filterBills('paid', this)">Paid</button>
+        <button class="tab-btn-group" onclick="filterBills('overdue', this)">Overdue</button>
+      </div>
+      <div id="billsList" class="space-y-3"></div>
+    </section>
+
+    <!-- ===== SUBSCRIPTIONS ===== -->
+    <section id="section-subscriptions" class="page-section">
+      <div class="section-header">
+        <div><h2 class="section-title">Subscriptions</h2><p class="section-subtitle">Manage recurring payments</p></div>
+        <div class="flex gap-2">
+          <button class="btn-secondary btn-sm" onclick="detectRecurring()">🔍 Detect Recurring</button>
+          <button class="btn-primary" onclick="openSubModal()">+ Add Subscription</button>
+        </div>
+      </div>
+      <div class="stat-card mb-4">
+        <div class="grid-cols-3">
+          <div><div class="text-xs text-slate-500 mb-1">Monthly Cost</div><div class="text-2xl font-bold text-white" id="subMonthlyTotal">₹0</div></div>
+          <div><div class="text-xs text-slate-500 mb-1">Active</div><div class="text-2xl font-bold text-emerald-400" id="subActiveCount">0</div></div>
+          <div><div class="text-xs text-slate-500 mb-1">Renewing Soon</div><div class="text-2xl font-bold text-amber-400" id="subRenewingSoon">0</div></div>
+        </div>
+      </div>
+      <div id="subscriptionsList" class="grid-cols-3"></div>
+    </section>
+
+    <!-- ===== SHOPPING ===== -->
+    <section id="section-shopping" class="page-section">
+      <div class="section-header">
+        <div><h2 class="section-title">Shopping & Purchases</h2><p class="section-subtitle">Purchase history and warranty tracking</p></div>
+        <button class="btn-primary" onclick="openShoppingModal()">+ Add Purchase</button>
+      </div>
+      <div class="filter-bar mb-4 flex flex-wrap gap-3">
+        <input type="text" class="form-input flex-1 min-w-40" id="shopSearch" placeholder="Search items...">
+        <select class="form-select w-44" id="shopCategory">
+          <option value="">All Categories</option>
+          <option>Electronics</option><option>Clothing</option><option>Books</option><option>Appliances</option><option>Food</option><option>Other</option>
+        </select>
+        <button class="btn-primary btn-sm" onclick="loadShopping()">Search</button>
+        <button class="btn-secondary btn-sm" onclick="loadShopping(true)">⚠️ Return Due</button>
+      </div>
+      <div class="section-card">
+        <div class="table-wrap">
+          <table class="data-table" id="purchasesTable">
+            <thead><tr><th>Date</th><th>Item</th><th>Store</th><th>Amount</th><th>Warranty</th><th>Return By</th><th>Actions</th></tr></thead>
+            <tbody><tr><td colspan="7" class="empty-state"><div class="empty-icon">🛍️</div>No purchases yet</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== TRAVEL ===== -->
+    <section id="section-travel" class="page-section">
+      <div class="section-header">
+        <div><h2 class="section-title">Travel Expenses</h2><p class="section-subtitle">Track trips, flights, fuel and more</p></div>
+        <button class="btn-primary" onclick="openTravelModal()">+ Add Travel</button>
+      </div>
+      <div class="grid-cols-4 mb-4">
+        <div class="stat-card text-center"><div class="text-xl font-bold text-white" id="travelTotal">₹0</div><div class="text-xs text-slate-500">Total Spent</div></div>
+        <div class="stat-card text-center"><div class="text-xl font-bold text-cyan-400" id="travelDistance">0 km</div><div class="text-xs text-slate-500">Total Distance</div></div>
+        <div class="stat-card text-center"><div class="text-xl font-bold text-amber-400" id="travelFuel">₹0</div><div class="text-xs text-slate-500">Fuel Cost</div></div>
+        <div class="stat-card text-center"><div class="text-xl font-bold text-violet-400" id="travelTrips">0</div><div class="text-xs text-slate-500">Trips</div></div>
+      </div>
+      <div class="section-card">
+        <div class="table-wrap">
+          <table class="data-table" id="travelTable">
+            <thead><tr><th>Date</th><th>Trip</th><th>Type</th><th>Route</th><th>Distance</th><th>Amount</th><th>Actions</th></tr></thead>
+            <tbody><tr><td colspan="7" class="empty-state"><div class="empty-icon">✈️</div>No travel expenses yet</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== HEALTH ===== -->
+    <section id="section-health" class="page-section">
+      <div class="section-header">
+        <div><h2 class="section-title">Health & Medical</h2><p class="section-subtitle">Track medical expenses and appointments</p></div>
+        <button class="btn-primary" onclick="openHealthModal()">+ Add Record</button>
+      </div>
+      <div id="healthReminders" class="mb-4"></div>
+      <div class="grid-cols-3 mb-4">
+        <div class="stat-card text-center"><div class="text-xl font-bold text-white" id="healthTotal">₹0</div><div class="text-xs text-slate-500">Total Medical Spend</div></div>
+        <div class="stat-card text-center"><div class="text-xl font-bold text-emerald-400" id="healthClaims">₹0</div><div class="text-xs text-slate-500">Insurance Claims</div></div>
+        <div class="stat-card text-center"><div class="text-xl font-bold text-amber-400" id="healthRemindersCount">0</div><div class="text-xs text-slate-500">Upcoming Reminders</div></div>
+      </div>
+      <div class="section-card">
+        <div class="table-wrap">
+          <table class="data-table" id="healthTable">
+            <thead><tr><th>Date</th><th>Type</th><th>Provider</th><th>Amount</th><th>Claim</th><th>Reminder</th><th>Actions</th></tr></thead>
+            <tbody><tr><td colspan="7" class="empty-state"><div class="empty-icon">🏥</div>No health records yet</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== EDUCATION ===== -->
+    <section id="section-education" class="page-section">
+      <div class="section-header">
+        <div><h2 class="section-title">Education & Learning</h2><p class="section-subtitle">Track courses, fees and certifications</p></div>
+        <button class="btn-primary" onclick="openEducationModal()">+ Add Record</button>
+      </div>
+      <div class="grid-cols-3 mb-4">
+        <div class="stat-card text-center"><div class="text-xl font-bold text-white" id="educationTotal">₹0</div><div class="text-xs text-slate-500">Total Education Spend</div></div>
+        <div class="stat-card text-center"><div class="text-xl font-bold text-violet-400" id="educationCourses">0</div><div class="text-xs text-slate-500">Records</div></div>
+        <div class="stat-card text-center"><div class="text-xl font-bold text-amber-400" id="educationRenewals">0</div><div class="text-xs text-slate-500">Upcoming Renewals</div></div>
+      </div>
+      <div class="section-card">
+        <div class="table-wrap">
+          <table class="data-table" id="educationTable">
+            <thead><tr><th>Date</th><th>Type</th><th>Title</th><th>Institution</th><th>Amount</th><th>Renewal</th><th>Actions</th></tr></thead>
+            <tbody><tr><td colspan="7" class="empty-state"><div class="empty-icon">📚</div>No education records yet</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== INSURANCE ===== -->
+    <section id="section-insurance" class="page-section">
+      <div class="section-header">
+        <div><h2 class="section-title">Insurance Policies</h2><p class="section-subtitle">Manage policies and premium reminders</p></div>
+        <button class="btn-primary" onclick="openInsuranceModal()">+ Add Policy</button>
+      </div>
+      <div class="grid-cols-4 mb-4">
+        <div class="stat-card text-center"><div class="text-xl font-bold text-white" id="insuranceCount">0</div><div class="text-xs text-slate-500">Active Policies</div></div>
+        <div class="stat-card text-center"><div class="text-xl font-bold text-red-400" id="insurancePremium">₹0</div><div class="text-xs text-slate-500">Annual Premium</div></div>
+        <div class="stat-card text-center"><div class="text-xl font-bold text-emerald-400" id="insuranceCoverage">₹0</div><div class="text-xs text-slate-500">Total Coverage</div></div>
+        <div class="stat-card text-center"><div class="text-xl font-bold text-amber-400" id="insuranceDueSoon">0</div><div class="text-xs text-slate-500">Premiums Due (30d)</div></div>
+      </div>
+      <div id="insuranceList" class="grid-cols-2"></div>
+    </section>
+
+    <!-- ===== SAVINGS ===== -->
+    <section id="section-savings" class="page-section">
+      <div class="section-header">
+        <div><h2 class="section-title">Savings Goals</h2><p class="section-subtitle">Track progress towards your financial goals</p></div>
+        <button class="btn-primary" onclick="openSavingsModal()">+ Create Goal</button>
+      </div>
+      <div class="stat-card mb-5">
+        <div class="grid-cols-3 mb-3">
+          <div><div class="text-xs text-slate-500 mb-1">Total Saved</div><div class="text-2xl font-bold text-emerald-400" id="savingsTotalSaved">₹0</div></div>
+          <div><div class="text-xs text-slate-500 mb-1">Total Target</div><div class="text-2xl font-bold text-white" id="savingsTotalTarget">₹0</div></div>
+          <div><div class="text-xs text-slate-500 mb-1">Goals</div><div class="text-2xl font-bold text-violet-400" id="savingsGoalCount">0</div></div>
+        </div>
+        <div class="progress-wrap"><div class="progress-bar progress-blue" id="savingsOverallBar" style="width:0%"></div></div>
+      </div>
+      <div id="savingsGoals" class="grid-cols-2"></div>
+    </section>
+
+    <!-- ===== BANKING ===== -->
+    <section id="section-banking" class="page-section">
+      <div class="section-header">
+        <div><h2 class="section-title">Banking</h2><p class="section-subtitle">Manage accounts and transactions</p></div>
+        <div class="flex gap-2">
+          <button class="btn-secondary btn-sm" onclick="openImportModal()">📂 Import CSV</button>
+          <button class="btn-primary" onclick="openBankModal()">+ Add Account</button>
+        </div>
+      </div>
+      <div id="bankAccountsList" class="grid-cols-3 mb-5"></div>
+      <div class="section-header mb-3">
+        <h3 class="font-semibold text-slate-300">Transactions</h3>
+      </div>
+      <div class="filter-bar mb-4 flex flex-wrap gap-3">
+        <input type="date" class="form-input w-36" id="txDateFrom">
+        <input type="date" class="form-input w-36" id="txDateTo">
+        <select class="form-select w-36" id="txType"><option value="">All Types</option><option value="credit">Credit</option><option value="debit">Debit</option></select>
+        <select class="form-select w-40" id="txCategory"><option value="">All Categories</option><option>Food</option><option>Transport</option><option>Shopping</option><option>Bills</option><option>Health</option><option>Education</option><option>Entertainment</option><option>Other</option><option>Income</option></select>
+        <input type="text" class="form-input flex-1 min-w-36" id="txSearch" placeholder="Search transactions...">
+        <button class="btn-primary btn-sm" onclick="loadTransactions()">Filter</button>
+      </div>
+      <div class="section-card">
+        <div class="table-wrap">
+          <table class="data-table" id="transactionsTable">
+            <thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Type</th><th>Amount</th><th>Balance</th><th>Dup?</th></tr></thead>
+            <tbody><tr><td colspan="7" class="empty-state"><div class="empty-icon">🏛️</div>No transactions. Add bank account and import a CSV.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== UPI ===== -->
+    <section id="section-upi" class="page-section">
+      <div class="section-header">
+        <div><h2 class="section-title">UPI Payments</h2><p class="section-subtitle">Generate payment links and track UPI transactions</p></div>
+        <button class="btn-primary" onclick="openUpiModal()">+ Record Payment</button>
+      </div>
+      <div class="grid-cols-4 mb-5">
+        <div class="stat-card text-center"><div class="text-xl font-bold text-white" id="upiTotal">₹0</div><div class="text-xs text-slate-500">Total Sent</div></div>
+        <div class="stat-card text-center"><div class="text-xl font-bold text-amber-400" id="upiPending">0</div><div class="text-xs text-slate-500">Pending</div></div>
+        <div class="stat-card text-center"><div class="text-xl font-bold text-emerald-400" id="upiCompleted">0</div><div class="text-xs text-slate-500">Completed</div></div>
+        <div class="stat-card text-center"><div class="text-xl font-bold text-violet-400" id="upiThisMonth">₹0</div><div class="text-xs text-slate-500">This Month</div></div>
+      </div>
+      <!-- UPI Generator -->
+      <div class="section-card mb-5">
+        <div class="px-5 py-3 border-b border-slate-700">
+          <h3 class="font-semibold text-sm text-white">Generate UPI Payment Link</h3>
+        </div>
+        <div class="p-5">
+          <div class="form-row mb-3">
+            <div class="form-group mb-0"><label class="form-label">UPI ID</label><input type="text" class="form-input" id="upiId" placeholder="user@paytm"></div>
+            <div class="form-group mb-0"><label class="form-label">Payee Name</label><input type="text" class="form-input" id="upiPayeeName" placeholder="John Doe"></div>
+          </div>
+          <div class="form-row mb-3">
+            <div class="form-group mb-0"><label class="form-label">Amount (₹)</label><input type="number" class="form-input" id="upiAmount" placeholder="500"></div>
+            <div class="form-group mb-0"><label class="form-label">Notes</label><input type="text" class="form-input" id="upiNotes" placeholder="Payment for..."></div>
+          </div>
+          <button class="btn-primary" id="generateUpiBtn" onclick="generateUpiLink()">⚡ Generate UPI Link</button>
+          <div id="upiLinkDisplay" class="hidden mt-4 p-4 bg-slate-800/50 rounded-xl border border-slate-700">
+            <div class="text-xs text-slate-400 mb-2 font-medium">Generated UPI Link:</div>
+            <div class="upi-link-box mb-3" id="upiLinkText"></div>
+            <div class="flex gap-2">
+              <button class="btn-secondary btn-sm" onclick="copyUpiLink()">📋 Copy Link</button>
+              <button class="btn-success btn-sm" onclick="saveUpiAsPayment()">💾 Save as Payment</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="section-card">
+        <div class="table-wrap">
+          <table class="data-table" id="upiPaymentsTable">
+            <thead><tr><th>Date</th><th>UPI ID</th><th>Payee</th><th>Amount</th><th>Status</th><th>Ref</th><th>Actions</th></tr></thead>
+            <tbody><tr><td colspan="7" class="empty-state"><div class="empty-icon">📱</div>No UPI payments yet</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== DEEPSEARCH ===== -->
+    <section id="section-deepsearch" class="page-section">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title text-gradient">🔍 DeepSearch AI</h2>
+          <p class="section-subtitle">Ask anything about your finances in plain English</p>
+        </div>
+      </div>
+      <div class="section-card mb-5">
+        <div class="p-6">
+          <textarea id="deepSearchInput" class="form-textarea w-full mb-3" style="min-height:100px; font-size:1rem;" placeholder="Ask anything... e.g. 'Where did I spend the most last month?' or 'How can I save more money?'"></textarea>
+          <div class="flex items-center gap-3">
+            <button class="btn-primary" id="deepSearchBtn" onclick="runDeepSearch()">🔍 Search</button>
+            <div id="deepSearchLoading" class="hidden flex items-center gap-2 text-slate-400 text-sm"><div class="spinner"></div> Analyzing...</div>
+          </div>
+          <!-- Quick chips -->
+          <div class="flex flex-wrap gap-2 mt-4">
+            <span class="search-chip" onclick="setSearchQuery('Where did I spend the most last month?')">📅 Last month summary</span>
+            <span class="search-chip" onclick="setSearchQuery('Show unusual transactions')">⚠️ Unusual transactions</span>
+            <span class="search-chip" onclick="setSearchQuery('Predict my spending next month')">🔮 Predict next month</span>
+            <span class="search-chip" onclick="setSearchQuery('Find duplicate payments')">🔁 Find duplicates</span>
+            <span class="search-chip" onclick="setSearchQuery('How can I save more money?')">💡 Saving tips</span>
+            <span class="search-chip" onclick="setSearchQuery('What is my budget status?')">🎯 Budget status</span>
+            <span class="search-chip" onclick="setSearchQuery('Show upcoming bills')">🧾 Upcoming bills</span>
+            <span class="search-chip" onclick="setSearchQuery('Analyze my subscriptions')">🔄 Subscription analysis</span>
+          </div>
+        </div>
+      </div>
+      <div id="deepSearchResults" class="hidden">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="search-intent-badge" id="searchIntent">general</span>
+        </div>
+        <div class="grid-cols-2-1">
+          <div>
+            <div class="section-card mb-4">
+              <div class="px-5 py-3 border-b border-slate-700"><h3 class="font-semibold text-sm text-white">Results</h3></div>
+              <div class="p-4" id="searchResultsList"></div>
+            </div>
+          </div>
+          <div>
+            <div class="section-card mb-4">
+              <div class="px-5 py-3 border-b border-slate-700"><h3 class="font-semibold text-sm text-white">Summary</h3></div>
+              <div class="p-4 text-sm text-slate-300" id="searchSummary"></div>
+            </div>
+            <div class="section-card">
+              <div class="px-5 py-3 border-b border-slate-700"><h3 class="font-semibold text-sm text-white">💡 Recommendations</h3></div>
+              <div class="p-4" id="searchRecommendations"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== REPORTS ===== -->
+    <section id="section-reports" class="page-section">
+      <div class="section-header">
+        <div><h2 class="section-title">Reports & Analytics</h2><p class="section-subtitle">Visualize and export your financial data</p></div>
+      </div>
+      <div class="flex flex-wrap gap-3 mb-5">
+        <input type="date" class="form-input w-36" id="reportDateFrom">
+        <input type="date" class="form-input w-36" id="reportDateTo">
+        <button class="btn-primary btn-sm" onclick="loadReportsCharts()">Apply</button>
+        <div class="ml-auto flex gap-2">
+          <button class="btn-secondary" id="exportCsvBtn" onclick="exportCSV()">📊 Export CSV</button>
+          <button class="btn-secondary" id="exportPdfBtn" onclick="exportPDF()">📄 Export PDF</button>
+          <button class="btn-secondary" id="exportJsonBtn" onclick="exportJSON()">💾 Backup JSON</button>
+        </div>
+      </div>
+      <div class="chart-card mb-5">
+        <h3 class="font-semibold text-sm text-slate-300 mb-3">Monthly Spending (Last 12 Months)</h3>
+        <div class="chart-container" style="height:320px"><canvas id="reportsMonthlyChart"></canvas></div>
+      </div>
+      <div class="grid-cols-2">
+        <div class="chart-card">
+          <h3 class="font-semibold text-sm text-slate-300 mb-3">Income vs Expense</h3>
+          <div class="chart-container" style="height:240px"><canvas id="incomeExpenseChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h3 class="font-semibold text-sm text-slate-300 mb-3">Spending by Category</h3>
+          <div class="chart-container" style="height:240px"><canvas id="reportsCategoryChart"></canvas></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== SETTINGS ===== -->
+    <section id="section-settings" class="page-section">
+      <div class="section-header"><h2 class="section-title">Settings</h2></div>
+      <div class="grid-cols-2 gap-6">
+        <div>
+          <div class="section-card mb-4">
+            <div class="px-5 py-3 border-b border-slate-700"><h3 class="font-semibold text-sm text-white">Profile</h3></div>
+            <div class="p-5">
+              <div class="flex items-center gap-4 mb-5">
+                <div class="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-2xl font-bold text-white" id="settingsAvatar">U</div>
+                <div>
+                  <div class="font-semibold text-white" id="settingsAvatarName">User</div>
+                  <div class="text-sm text-slate-500">Account settings</div>
+                </div>
+              </div>
+              <form id="profileForm" onsubmit="saveProfile(event)" class="space-y-3">
+                <div class="form-group"><label class="form-label">Full Name</label><input type="text" class="form-input" id="settingsName"></div>
+                <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="settingsEmail"></div>
+                <div class="form-group"><label class="form-label">Phone</label><input type="tel" class="form-input" id="settingsPhone"></div>
+                <button type="submit" class="btn-primary w-full">Save Profile</button>
+              </form>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="section-card mb-4">
+            <div class="px-5 py-3 border-b border-slate-700"><h3 class="font-semibold text-sm text-white">Preferences</h3></div>
+            <div class="p-5 space-y-3">
+              <div class="form-group">
+                <label class="form-label">Currency</label>
+                <select class="form-select" id="settingsCurrency">
+                  <option value="INR">₹ Indian Rupee (INR)</option>
+                  <option value="USD">$ US Dollar (USD)</option>
+                  <option value="EUR">€ Euro (EUR)</option>
+                  <option value="GBP">£ British Pound (GBP)</option>
+                  <option value="JPY">¥ Japanese Yen (JPY)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Monthly Income</label>
+                <input type="number" class="form-input" id="settingsIncome" placeholder="0">
+              </div>
+              <button class="btn-primary w-full" onclick="savePreferences()">Save Preferences</button>
+            </div>
+          </div>
+          <div class="section-card">
+            <div class="px-5 py-3 border-b border-slate-700"><h3 class="font-semibold text-sm text-red-400">Danger Zone</h3></div>
+            <div class="p-5">
+              <div class="mb-4">
+                <label class="form-label">Import JSON Backup</label>
+                <input type="file" class="form-input" id="importJsonInput" accept=".json" onchange="importJSON(this)">
+              </div>
+              <p class="text-xs text-slate-500 mb-3">Importing will add records to your existing data.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div id="toastContainer"></div>
+
+<!-- ========== MODALS ========== -->
+
+<!-- Expense Modal -->
+<div id="expenseModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 id="expenseModalTitle">Add Expense</h3>
+      <button class="modal-close" onclick="closeModal('expenseModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="expenseEditId">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Amount *</label><input type="number" class="form-input" id="expAmount" placeholder="0.00" step="0.01" min="0"></div>
+        <div class="form-group"><label class="form-label">Category *</label>
+          <select class="form-select" id="expCategoryInput">
+            <option value="">Select category</option>
+            <option>Food</option><option>Transport</option><option>Shopping</option><option>Bills</option>
+            <option>Health</option><option>Education</option><option>Travel</option><option>Entertainment</option><option>Insurance</option><option>Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Description</label><input type="text" class="form-input" id="expDescription" placeholder="What did you spend on?"></div>
+        <div class="form-group"><label class="form-label">Date *</label><input type="date" class="form-input" id="expDate"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Payment Method</label>
+          <select class="form-select" id="expPaymentInput">
+            <option value="cash">Cash</option><option value="card">Card</option><option value="upi">UPI</option><option value="net banking">Net Banking</option><option value="wallet">Wallet</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Tags</label><input type="text" class="form-input" id="expTags" placeholder="comma, separated, tags"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="expNotes" placeholder="Additional notes..."></textarea></div>
+      <div class="flex items-center gap-3">
+        <input type="checkbox" id="expRecurring" class="w-4 h-4" onchange="toggleRecurringField()">
+        <label class="form-label mb-0 cursor-pointer" for="expRecurring">Recurring expense</label>
+      </div>
+      <div id="expIntervalDiv" class="form-group mt-2 hidden">
+        <label class="form-label">Repeat</label>
+        <select class="form-select" id="expInterval"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly" selected>Monthly</option><option value="yearly">Yearly</option></select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('expenseModal')">Cancel</button>
+      <button class="btn-primary" id="saveExpenseBtn" onclick="saveExpense()">Save Expense</button>
+    </div>
+  </div>
+</div>
+
+<!-- Budget Modal -->
+<div id="budgetModal" class="modal-overlay">
+  <div class="modal-content modal-lg">
+    <div class="modal-header"><h3>Set Budget</h3><button class="modal-close" onclick="closeModal('budgetModal')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-row mb-4">
+        <div class="form-group"><label class="form-label">Month</label><input type="month" class="form-input" id="budgetModalMonth"></div>
+        <div class="form-group"><label class="form-label">Total Monthly Budget (₹)</label><input type="number" class="form-input" id="totalBudgetInput" placeholder="e.g. 30000"></div>
+      </div>
+      <div class="divider"></div>
+      <h4 class="text-sm font-semibold text-slate-300 mb-3">Category Budgets</h4>
+      <div class="grid grid-cols-2 gap-3" id="catBudgetInputs">
+        <!-- dynamically filled -->
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('budgetModal')">Cancel</button>
+      <button class="btn-primary" onclick="saveBudget()">Save Budget</button>
+    </div>
+  </div>
+</div>
+
+<!-- Bill Modal -->
+<div id="billModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-header"><h3 id="billModalTitle">Add Bill</h3><button class="modal-close" onclick="closeModal('billModal')">✕</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="billEditId">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Type *</label>
+          <select class="form-select" id="billType">
+            <option value="">Select type</option>
+            <option>Electricity</option><option>Water</option><option>Internet</option><option>Mobile</option><option>Gas</option><option>Rent</option><option>Other</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Amount (₹) *</label><input type="number" class="form-input" id="billAmount" placeholder="0.00"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Due Date *</label><input type="date" class="form-input" id="billDueDate"></div>
+        <div class="form-group"><label class="form-label">Late Fee (₹)</label><input type="number" class="form-input" id="billLateFee" placeholder="0" value="0"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Monthly Usage</label><input type="number" class="form-input" id="billMonthlyUsage" placeholder="Units"></div>
+        <div class="form-group flex items-end pb-1"><label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="billIsPaid" class="w-4 h-4"><span class="text-sm text-slate-300">Mark as Paid</span></label></div>
+      </div>
+      <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="billNotes" placeholder="Notes..."></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('billModal')">Cancel</button>
+      <button class="btn-primary" onclick="saveBill()">Save Bill</button>
+    </div>
+  </div>
+</div>
+
+<!-- Subscription Modal -->
+<div id="subscriptionModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-header"><h3 id="subModalTitle">Add Subscription</h3><button class="modal-close" onclick="closeModal('subscriptionModal')">✕</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="subEditId">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Service Name *</label><input type="text" class="form-input" id="subName" placeholder="Netflix, Spotify..."></div>
+        <div class="form-group"><label class="form-label">Amount (₹) *</label><input type="number" class="form-input" id="subAmount" placeholder="0.00"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Billing Cycle</label>
+          <select class="form-select" id="subCycle"><option value="monthly">Monthly</option><option value="yearly">Yearly</option><option value="weekly">Weekly</option><option value="quarterly">Quarterly</option></select>
+        </div>
+        <div class="form-group"><label class="form-label">Next Renewal Date</label><input type="date" class="form-input" id="subRenewal"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Category</label><input type="text" class="form-input" id="subCategory" placeholder="Entertainment, Software..."></div>
+        <div class="form-group"><label class="form-label">Cancel URL</label><input type="url" class="form-input" id="subCancelUrl" placeholder="https://..."></div>
+      </div>
+      <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="subNotes"></textarea></div>
+      <div class="flex items-center gap-2">
+        <input type="checkbox" id="subIsActive" class="w-4 h-4" checked>
+        <label class="form-label mb-0" for="subIsActive">Active</label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('subscriptionModal')">Cancel</button>
+      <button class="btn-primary" onclick="saveSubscription()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Shopping Modal -->
+<div id="shoppingModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-header"><h3 id="shopModalTitle">Add Purchase</h3><button class="modal-close" onclick="closeModal('shoppingModal')">✕</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="shopEditId">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Item Name *</label><input type="text" class="form-input" id="shopItemName" placeholder="Item name"></div>
+        <div class="form-group"><label class="form-label">Amount (₹) *</label><input type="number" class="form-input" id="shopAmount"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Store</label><input type="text" class="form-input" id="shopStore" placeholder="Amazon, Flipkart..."></div>
+        <div class="form-group"><label class="form-label">Category</label><input type="text" class="form-input" id="shopCategoryInput" placeholder="Electronics, Clothing..."></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Purchase Date *</label><input type="date" class="form-input" id="shopDate"></div>
+        <div class="form-group"><label class="form-label">Warranty Until</label><input type="date" class="form-input" id="shopWarranty"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Return Deadline</label><input type="date" class="form-input" id="shopReturnDeadline"></div>
+        <div class="form-group"><label class="form-label">Return Status</label>
+          <select class="form-select" id="shopReturnStatus"><option value="pending">Pending</option><option value="returned">Returned</option><option value="expired">Expired</option></select>
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="shopNotes"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('shoppingModal')">Cancel</button>
+      <button class="btn-primary" onclick="savePurchase()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Travel Modal -->
+<div id="travelModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-header"><h3 id="travelModalTitle">Add Travel Expense</h3><button class="modal-close" onclick="closeModal('travelModal')">✕</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="travelEditId">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Type *</label>
+          <select class="form-select" id="travelType">
+            <option value="">Select type</option>
+            <option value="flight">✈️ Flight</option><option value="train">🚆 Train</option><option value="cab">🚕 Cab</option><option value="fuel">⛽ Fuel</option><option value="parking">🅿️ Parking</option><option value="toll">🛣️ Toll</option><option value="other">Other</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Amount (₹) *</label><input type="number" class="form-input" id="travelAmount"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Trip Name</label><input type="text" class="form-input" id="travelTripName" placeholder="e.g. Goa Trip 2024"></div>
+        <div class="form-group"><label class="form-label">Date *</label><input type="date" class="form-input" id="travelDate"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">From</label><input type="text" class="form-input" id="travelOrigin" placeholder="Origin"></div>
+        <div class="form-group"><label class="form-label">To</label><input type="text" class="form-input" id="travelDest" placeholder="Destination"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Distance (km)</label><input type="number" class="form-input" id="travelDistance"></div>
+        <div class="form-group"><label class="form-label">Fuel Cost (₹)</label><input type="number" class="form-input" id="travelFuelCost"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="travelNotes"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('travelModal')">Cancel</button>
+      <button class="btn-primary" onclick="saveTravel()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Health Modal -->
+<div id="healthModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-header"><h3 id="healthModalTitle">Add Health Record</h3><button class="modal-close" onclick="closeModal('healthModal')">✕</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="healthEditId">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Type *</label>
+          <select class="form-select" id="healthType">
+            <option value="">Select type</option>
+            <option>Doctor Visit</option><option>Medicine</option><option>Hospital Bill</option><option>Lab Test</option><option>Dental</option><option>Other</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Amount (₹) *</label><input type="number" class="form-input" id="healthAmount"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Provider</label><input type="text" class="form-input" id="healthProvider" placeholder="Hospital, Doctor name..."></div>
+        <div class="form-group"><label class="form-label">Date *</label><input type="date" class="form-input" id="healthDate"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Insurance Claim (₹)</label><input type="number" class="form-input" id="healthClaim" placeholder="0" value="0"></div>
+        <div class="form-group"><label class="form-label">Reminder Date</label><input type="date" class="form-input" id="healthReminder"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="healthNotes"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('healthModal')">Cancel</button>
+      <button class="btn-primary" onclick="saveHealth()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Education Modal -->
+<div id="educationModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-header"><h3 id="eduModalTitle">Add Education Record</h3><button class="modal-close" onclick="closeModal('educationModal')">✕</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="eduEditId">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Type *</label>
+          <select class="form-select" id="eduType">
+            <option value="">Select type</option>
+            <option value="Tuition">Tuition</option><option value="Course">Online Course</option><option value="Book">Book</option><option value="Certification">Certification</option><option value="Workshop">Workshop</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Amount (₹) *</label><input type="number" class="form-input" id="eduAmount"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Title *</label><input type="text" class="form-input" id="eduTitle" placeholder="Course/subject title"></div>
+        <div class="form-group"><label class="form-label">Institution</label><input type="text" class="form-input" id="eduInstitution" placeholder="School, Platform..."></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Date *</label><input type="date" class="form-input" id="eduDate"></div>
+        <div class="form-group"><label class="form-label">Renewal Date</label><input type="date" class="form-input" id="eduRenewal"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="eduNotes"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('educationModal')">Cancel</button>
+      <button class="btn-primary" onclick="saveEducation()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Insurance Modal -->
+<div id="insuranceModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-header"><h3 id="insModalTitle">Add Insurance Policy</h3><button class="modal-close" onclick="closeModal('insuranceModal')">✕</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="insEditId">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Type *</label>
+          <select class="form-select" id="insType"><option value="">Select type</option><option>Health</option><option>Vehicle</option><option>Life</option><option>Home</option><option>Other</option></select>
+        </div>
+        <div class="form-group"><label class="form-label">Provider *</label><input type="text" class="form-input" id="insProvider" placeholder="LIC, Star Health..."></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Policy Number</label><input type="text" class="form-input" id="insPolicyNumber"></div>
+        <div class="form-group"><label class="form-label">Annual Premium (₹) *</label><input type="number" class="form-input" id="insPremium"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Coverage Amount (₹)</label><input type="number" class="form-input" id="insCoverage"></div>
+        <div class="form-group"><label class="form-label">Next Premium Date</label><input type="date" class="form-input" id="insNextPremium"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Start Date</label><input type="date" class="form-input" id="insStartDate"></div>
+        <div class="form-group"><label class="form-label">End Date</label><input type="date" class="form-input" id="insEndDate"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="insNotes"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('insuranceModal')">Cancel</button>
+      <button class="btn-primary" onclick="saveInsurance()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Savings Modal -->
+<div id="savingsModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-header"><h3 id="savingsModalTitle">Create Savings Goal</h3><button class="modal-close" onclick="closeModal('savingsModal')">✕</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="savingsEditId">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Goal Name *</label><input type="text" class="form-input" id="goalName" placeholder="Emergency Fund, Laptop..."></div>
+        <div class="form-group"><label class="form-label">Target Amount (₹) *</label><input type="number" class="form-input" id="goalTarget"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Monthly Target (₹)</label><input type="number" class="form-input" id="goalMonthly"></div>
+        <div class="form-group"><label class="form-label">Target Date</label><input type="date" class="form-input" id="goalDate"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="goalNotes"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('savingsModal')">Cancel</button>
+      <button class="btn-primary" onclick="saveGoal()">Save Goal</button>
+    </div>
+  </div>
+</div>
+
+<!-- Deposit Modal -->
+<div id="depositModal" class="modal-overlay">
+  <div class="modal-content" style="max-width:400px">
+    <div class="modal-header"><h3>Add Deposit</h3><button class="modal-close" onclick="closeModal('depositModal')">✕</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="depositGoalId">
+      <div class="form-group"><label class="form-label">Goal</label><input type="text" class="form-input" id="depositGoalName" readonly></div>
+      <div class="form-group"><label class="form-label">Current Saved</label><input type="text" class="form-input" id="depositCurrentSaved" readonly></div>
+      <div class="form-group"><label class="form-label">Deposit Amount (₹) *</label><input type="number" class="form-input" id="depositAmount" placeholder="0.00"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('depositModal')">Cancel</button>
+      <button class="btn-primary" onclick="submitDeposit()">Add Deposit</button>
+    </div>
+  </div>
+</div>
+
+<!-- Bank Account Modal -->
+<div id="bankAccountModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-header"><h3 id="bankModalTitle">Add Bank Account</h3><button class="modal-close" onclick="closeModal('bankAccountModal')">✕</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="bankEditId">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Bank Name *</label><input type="text" class="form-input" id="bankName" placeholder="SBI, HDFC, ICICI..."></div>
+        <div class="form-group"><label class="form-label">Account Type</label>
+          <select class="form-select" id="bankType"><option value="savings">Savings</option><option value="current">Current</option><option value="salary">Salary</option></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Account Number</label><input type="text" class="form-input" id="bankAccNum" placeholder="XXXX XXXX XXXX"></div>
+        <div class="form-group"><label class="form-label">IFSC Code</label><input type="text" class="form-input" id="bankIfsc" placeholder="SBIN0001234"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Branch</label><input type="text" class="form-input" id="bankBranch"></div>
+        <div class="form-group"><label class="form-label">Current Balance (₹)</label><input type="number" class="form-input" id="bankBalance" placeholder="0.00"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="bankNotes" style="min-height:60px"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('bankAccountModal')">Cancel</button>
+      <button class="btn-primary" onclick="saveBankAccount()">Save Account</button>
+    </div>
+  </div>
+</div>
+
+<!-- Import Statement Modal -->
+<div id="importModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-header"><h3>Import Bank Statement (CSV)</h3><button class="modal-close" onclick="closeModal('importModal')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Bank Account</label>
+        <select class="form-select" id="importBankId"><option value="">Select account</option></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">CSV File</label>
+        <input type="file" class="form-input" id="importCsvFile" accept=".csv">
+      </div>
+      <div class="p-3 bg-slate-800/50 rounded-lg text-xs text-slate-400 mt-2">
+        <strong class="text-slate-300">Supported formats:</strong><br>
+        • Date, Description/Narration, Amount, Balance<br>
+        • Date, Description, Debit, Credit, Balance<br>
+        Standard Indian bank statement CSV formats are auto-detected.
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('importModal')">Cancel</button>
+      <button class="btn-primary" onclick="importBankCSV()">Import Transactions</button>
+    </div>
+  </div>
+</div>
+
+<!-- UPI Modal -->
+<div id="upiModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-header"><h3 id="upiModalTitle">Record UPI Payment</h3><button class="modal-close" onclick="closeModal('upiModal')">✕</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="upiEditId">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">UPI ID *</label><input type="text" class="form-input" id="upiModalId" placeholder="user@paytm"></div>
+        <div class="form-group"><label class="form-label">Payee Name</label><input type="text" class="form-input" id="upiModalPayee"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Amount (₹) *</label><input type="number" class="form-input" id="upiModalAmount"></div>
+        <div class="form-group"><label class="form-label">Date *</label><input type="date" class="form-input" id="upiModalDate"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Status</label>
+          <select class="form-select" id="upiModalStatus"><option value="pending">Pending</option><option value="completed">Completed</option><option value="failed">Failed</option></select>
+        </div>
+        <div class="form-group"><label class="form-label">Transaction Ref</label><input type="text" class="form-input" id="upiModalRef"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="upiModalNotes" style="min-height:60px"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('upiModal')">Cancel</button>
+      <button class="btn-primary" onclick="saveUpiPayment()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
