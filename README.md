@@ -34,10 +34,18 @@ A production-ready full-stack web application for comprehensive personal finance
 ## Setup
 
 ```bash
-# Install dependencies
+# 1. Clone the repository
+git clone https://github.com/mahak867/spendzview.git
+cd spendzview
+
+# 2. Install dependencies
 npm install
 
-# Start the server
+# 3. Configure environment
+cp .env.example .env
+# Edit .env and set a strong SESSION_SECRET
+
+# 4. Start the server
 npm start
 
 # Open in browser
@@ -49,6 +57,15 @@ npm start
 ```bash
 npm run dev   # Uses nodemon for auto-restart
 ```
+
+## Environment Variables
+
+Copy `.env.example` to `.env` and configure:
+
+| Variable         | Default                            | Description                              |
+|------------------|------------------------------------|------------------------------------------|
+| `PORT`           | `3000`                             | Port the server listens on               |
+| `SESSION_SECRET` | *(fallback hardcoded — change it)* | Secret used to sign session cookies      |
 
 ## Default Demo Account
 
