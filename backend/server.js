@@ -10,11 +10,20 @@ require('./models/db');
 // Middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+const sessionSecret = process.env.SESSION_SECRET;
+if (!sessionSecret) {
+  console.warn('WARNING: SESSION_SECRET env var is not set. Using an insecure default – set it in production.');
+}
 app.use(session({
-  secret: 'spendsense-pro-secret-key-2024',
+  secret: sessionSecret || 'change-me-to-a-long-random-string',
   resave: false,
   saveUninitialized: false,
-  cookie: { maxAge: 7 * 24 * 60 * 60 * 1000 }
+  cookie: {
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax'
+  }
 }));
 
 // Static files
