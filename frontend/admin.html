@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SpendSense Pro — Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body { background: #0f172a; color: #f1f5f9; font-family: 'Inter', sans-serif; }
+    .admin-header { background: linear-gradient(135deg, #6366f1, #8b5cf6); padding: 2rem; }
+    .metric-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 1.5rem; }
+    .metric-value { font-size: 2rem; font-weight: 800; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+    @media (max-width: 768px) { .grid-4, .grid-2 { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 480px) { .grid-4 { grid-template-columns: 1fr; } }
+    .auth-gate { max-width: 400px; margin: 4rem auto; padding: 2rem; text-align: center; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 0.7rem; font-weight: 600; }
+    .badge-free { background: rgba(100,116,139,0.2); color: #94a3b8; }
+    .badge-pro { background: rgba(99,102,241,0.2); color: #818cf8; }
+    .badge-family { background: rgba(16,185,129,0.2); color: #10b981; }
+  </style>
+</head>
+<body>
+<div id="authGate" class="auth-gate">
+  <div style="font-size:3rem;margin-bottom:1rem;">🔐</div>
+  <h2 style="font-size:1.25rem;font-weight:700;margin-bottom:0.5rem;">Admin Access</h2>
+  <p style="color:#94a3b8;font-size:0.85rem;margin-bottom:1.5rem;">Enter admin key to view metrics</p>
+  <input type="password" id="adminKeyInput" placeholder="Admin key..." style="width:100%;padding:10px;background:#1e293b;border:1px solid #334155;border-radius:8px;color:#f1f5f9;font-size:0.9rem;outline:none;margin-bottom:12px;">
+  <button onclick="loadAdmin()" style="width:100%;padding:10px;background:#6366f1;color:white;border:none;border-radius:8px;font-size:0.9rem;font-weight:600;cursor:pointer;">Access Dashboard</button>
+  <p id="authError" style="color:#ef4444;font-size:0.8rem;margin-top:8px;display:none;">Invalid admin key</p>
+</div>
+
+<div id="adminDash" style="display:none;">
+  <div class="admin-header">
+    <div style="max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <h1 style="font-size:1.5rem;font-weight:800;">📊 SpendSense Pro — Investor Dashboard</h1>
+        <p style="opacity:0.8;font-size:0.85rem;margin-top:4px;">Real-time platform metrics</p>
+      </div>
+      <button onclick="loadMetrics()" style="background:rgba(255,255,255,0.2);border:none;color:white;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:0.85rem;">↻ Refresh</button>
+    </div>
+  </div>
+
+  <div style="max-width:1200px;margin:2rem auto;padding:0 1rem;">
+    <!-- Key metrics -->
+    <div class="grid-4" style="margin-bottom:1.5rem;">
+      <div class="metric-card">
+        <div style="color:#94a3b8;font-size:0.75rem;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px;">Total Users</div>
+        <div class="metric-value text-white" id="mTotalUsers">—</div>
+        <div style="color:#10b981;font-size:0.75rem;margin-top:4px;" id="mNewToday">0 today</div>
+      </div>
+      <div class="metric-card">
+        <div style="color:#94a3b8;font-size:0.75rem;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px;">Active Today</div>
+        <div class="metric-value" style="color:#6366f1;" id="mActiveToday">—</div>
+        <div style="color:#94a3b8;font-size:0.75rem;margin-top:4px;">users with activity</div>
+      </div>
+      <div class="metric-card">
+        <div style="color:#94a3b8;font-size:0.75rem;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px;">Total Transactions</div>
+        <div class="metric-value" style="color:#f59e0b;" id="mTransactions">—</div>
+        <div style="color:#94a3b8;font-size:0.75rem;margin-top:4px;">expenses processed</div>
+      </div>
+      <div class="metric-card">
+        <div style="color:#94a3b8;font-size:0.75rem;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px;">Revenue</div>
+        <div class="metric-value" style="color:#10b981;" id="mRevenue">—</div>
+        <div style="color:#94a3b8;font-size:0.75rem;margin-top:4px;">from subscriptions</div>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-bottom:1.5rem;">
+      <div class="metric-card">
+        <h3 style="font-size:0.9rem;font-weight:600;margin-bottom:1rem;">User Growth (Last 6 Months)</h3>
+        <canvas id="growthChart" height="200"></canvas>
+      </div>
+      <div class="metric-card">
+        <h3 style="font-size:0.9rem;font-weight:600;margin-bottom:1rem;">Plan Distribution</h3>
+        <canvas id="plansChart" height="200"></canvas>
+        <div id="planBreakdown" style="margin-top:1rem;"></div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="metric-card">
+        <h3 style="font-size:0.9rem;font-weight:600;margin-bottom:0.5rem;">Platform Stats</h3>
+        <table style="width:100%;font-size:0.85rem;border-collapse:collapse;">
+          <tbody id="statsTable"></tbody>
+        </table>
+      </div>
+      <div class="metric-card">
+        <h3 style="font-size:0.9rem;font-weight:600;margin-bottom:0.5rem;">Quick Actions</h3>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <a href="/dashboard" style="display:block;padding:8px 12px;background:#1e293b;border:1px solid #334155;border-radius:8px;color:#94a3b8;text-decoration:none;font-size:0.85rem;text-align:center;">→ Open Dashboard</a>
+          <a href="/api/privacy/policy" target="_blank" style="display:block;padding:8px 12px;background:#1e293b;border:1px solid #334155;border-radius:8px;color:#94a3b8;text-decoration:none;font-size:0.85rem;text-align:center;">→ Privacy Policy API</a>
+          <a href="/health" target="_blank" style="display:block;padding:8px 12px;background:#1e293b;border:1px solid #334155;border-radius:8px;color:#94a3b8;text-decoration:none;font-size:0.85rem;text-align:center;">→ Health Check</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let adminKey = '';
+let growthChartInst, plansChartInst;
+
+async function loadAdmin() {
+  adminKey = document.getElementById('adminKeyInput').value;
+  const resp = await fetch(`/api/admin/metrics?adminKey=${encodeURIComponent(adminKey)}`);
+  if (!resp.ok) { document.getElementById('authError').style.display = 'block'; return; }
+  document.getElementById('authGate').style.display = 'none';
+  document.getElementById('adminDash').style.display = 'block';
+  const data = await resp.json();
+  renderMetrics(data);
+}
+
+async function loadMetrics() {
+  const resp = await fetch(`/api/admin/metrics?adminKey=${encodeURIComponent(adminKey)}`);
+  if (!resp.ok) return;
+  renderMetrics(await resp.json());
+}
+
+function fmt(n) { return n >= 1000 ? '₹' + (n/1000).toFixed(1) + 'K' : '₹' + n.toFixed(0); }
+
+function renderMetrics(d) {
+  document.getElementById('mTotalUsers').textContent = d.users.total;
+  document.getElementById('mNewToday').textContent = `+${d.users.newToday} today · +${d.users.newThisMonth} this month`;
+  document.getElementById('mActiveToday').textContent = d.users.activeToday;
+  document.getElementById('mTransactions').textContent = (d.expenses.count + d.transactions).toLocaleString();
+  document.getElementById('mRevenue').textContent = fmt(d.revenue);
+
+  // Growth chart
+  const ctx1 = document.getElementById('growthChart').getContext('2d');
+  if (growthChartInst) growthChartInst.destroy();
+  growthChartInst = new Chart(ctx1, {
+    type: 'bar',
+    data: {
+      labels: d.userGrowth.map(g => g.label),
+      datasets: [{ label: 'New Users', data: d.userGrowth.map(g => g.count), backgroundColor: 'rgba(99,102,241,0.7)', borderRadius: 6 }]
+    },
+    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } }, x: { ticks: { color: '#94a3b8' }, grid: { display: false } } } }
+  });
+
+  // Plans chart
+  const ctx2 = document.getElementById('plansChart').getContext('2d');
+  if (plansChartInst) plansChartInst.destroy();
+  plansChartInst = new Chart(ctx2, {
+    type: 'doughnut',
+    data: {
+      labels: d.plans.map(p => p.plan),
+      datasets: [{ data: d.plans.map(p => p.count), backgroundColor: ['#475569', '#6366f1', '#10b981', '#f59e0b'] }]
+    },
+    options: { responsive: true, plugins: { legend: { position: 'right', labels: { color: '#94a3b8', font: { size: 11 } } } } }
+  });
+
+  document.getElementById('planBreakdown').innerHTML = d.plans.map(p =>
+    `<div style="display:flex;justify-content:space-between;font-size:0.8rem;padding:3px 0;border-bottom:1px solid #1e293b;">
+       <span class="badge badge-${p.plan}">${p.plan}</span><span style="color:#94a3b8;">${p.count} users</span>
+     </div>`
+  ).join('');
+
+  document.getElementById('statsTable').innerHTML = [
+    ['Total Expenses', d.expenses.count.toLocaleString()],
+    ['Total Volume (Expenses)', fmt(d.expenses.totalVolume)],
+    ['Total Income Records', d.incomes.count.toLocaleString()],
+    ['Total Income Volume', fmt(d.incomes.totalVolume)],
+    ['Bank Transactions', d.transactions.toLocaleString()],
+    ['New Users This Month', d.users.newThisMonth],
+  ].map(([k, v]) => `<tr><td style="color:#94a3b8;padding:6px 0;">${k}</td><td style="color:#f1f5f9;font-weight:600;text-align:right;">${v}</td></tr>`).join('');
+}
+
+document.getElementById('adminKeyInput').addEventListener('keydown', e => { if (e.key === 'Enter') loadAdmin(); });
+</script>
+</body>
+</html>

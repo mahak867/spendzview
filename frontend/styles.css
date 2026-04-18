@@ -326,3 +326,103 @@ body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--tex
 .amount-positive { color: #34d399; }
 .amount-negative { color: #f87171; }
 .truncate-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ===== LIGHT THEME ===== */
+[data-theme="light"] {
+  --bg: #f8fafc;
+  --surface: #ffffff;
+  --surface2: #e2e8f0;
+  --border: #e2e8f0;
+  --border-light: #cbd5e1;
+  --text: #0f172a;
+  --text-muted: #475569;
+  --text-dim: #94a3b8;
+}
+[data-theme="light"] body { background: var(--bg); color: var(--text); }
+[data-theme="light"] #sidebar { background: #ffffff; border-right-color: #e2e8f0; }
+[data-theme="light"] #topNav { background: rgba(255,255,255,0.95); border-bottom-color: #e2e8f0; }
+[data-theme="light"] .stat-card { background: #ffffff; border-color: #e2e8f0; }
+[data-theme="light"] .section-card { background: #ffffff; border-color: #e2e8f0; }
+[data-theme="light"] .form-input, [data-theme="light"] .form-select, [data-theme="light"] .form-textarea {
+  background: #f8fafc; border-color: #cbd5e1; color: #0f172a;
+}
+[data-theme="light"] .data-table th { background: #f1f5f9; color: #475569; }
+[data-theme="light"] .data-table td { border-bottom-color: #f1f5f9; color: #0f172a; }
+[data-theme="light"] .data-table tr:hover td { background: #f8fafc; }
+[data-theme="light"] .modal-content { background: #ffffff; }
+[data-theme="light"] .modal-header { background: #f8fafc; border-bottom-color: #e2e8f0; }
+[data-theme="light"] .modal-footer { border-top-color: #e2e8f0; }
+[data-theme="light"] .nav-item { color: #64748b; }
+[data-theme="light"] .nav-item:hover { background: rgba(99,102,241,0.08); color: #1e293b; }
+[data-theme="light"] .nav-item.active { color: #4f46e5; background: rgba(99,102,241,0.1); }
+[data-theme="light"] .chart-card { background: #ffffff; border-color: #e2e8f0; }
+[data-theme="light"] .sidebar-logo { border-bottom-color: #e2e8f0; }
+
+/* ===== GLOBAL SEARCH ===== */
+#globalSearchResults .search-item {
+  padding: 10px 14px; cursor: pointer; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px; font-size: 0.82rem;
+}
+#globalSearchResults .search-item:hover { background: rgba(99,102,241,0.08); }
+#globalSearchResults .search-item .s-icon { font-size: 1.1rem; width: 24px; text-align: center; flex-shrink: 0; }
+#globalSearchResults .search-item .s-title { font-weight: 500; color: var(--text); }
+#globalSearchResults .search-item .s-sub { color: var(--text-muted); font-size: 0.75rem; }
+#globalSearchResults .search-item .s-amount { margin-left: auto; font-weight: 600; color: var(--primary); white-space: nowrap; }
+
+/* ===== PLAN BADGE ===== */
+.plan-card { transition: border-color 0.2s; }
+.plan-card.selected { border-color: var(--primary); }
+
+/* ===== ONBOARDING ===== */
+.onboarding-step { width: 10px; height: 10px; border-radius: 50%; background: var(--surface2); transition: all 0.2s; }
+.onboarding-step.active { background: var(--primary); width: 24px; border-radius: 5px; }
+
+/* ===== CREDIT CARD VISUAL ===== */
+.cc-card {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  border: 1px solid var(--border); border-radius: 14px; padding: 1.25rem;
+  position: relative; overflow: hidden;
+}
+.cc-card::before {
+  content: ''; position: absolute; top: -30px; right: -30px;
+  width: 120px; height: 120px; border-radius: 50%;
+  background: rgba(99,102,241,0.15);
+}
+.cc-card-bank { font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.75rem; }
+.cc-card-number { font-size: 1.1rem; letter-spacing: 4px; font-weight: 600; margin-bottom: 1rem; }
+.cc-card-utilization { height: 4px; background: var(--surface2); border-radius: 2px; margin: 0.5rem 0; }
+.cc-card-utilization-bar { height: 100%; border-radius: 2px; background: linear-gradient(90deg, #10b981, #f59e0b); transition: width 0.5s; }
+
+/* ===== CASH FLOW TIMELINE ===== */
+.cf-event {
+  display: flex; align-items: center; gap: 12px; padding: 10px 14px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+  border-left: 3px solid var(--border);
+}
+.cf-event .cf-icon { font-size: 1.25rem; }
+.cf-event .cf-details { flex: 1; }
+.cf-event .cf-name { font-weight: 500; font-size: 0.85rem; color: var(--text); }
+.cf-event .cf-date { font-size: 0.75rem; color: var(--text-muted); }
+.cf-event .cf-amount { font-weight: 700; font-size: 0.9rem; white-space: nowrap; }
+
+/* ===== INVESTMENT CARDS ===== */
+.inv-gain { color: #10b981; }
+.inv-loss { color: #ef4444; }
+
+/* ===== LOAN CARD ===== */
+.loan-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem;
+}
+.loan-progress { height: 6px; background: var(--surface2); border-radius: 3px; margin: 0.5rem 0; }
+.loan-progress-bar { height: 100%; border-radius: 3px; background: linear-gradient(90deg, #6366f1, #8b5cf6); transition: width 0.5s; }
+
+/* ===== SPLIT CARD ===== */
+.split-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; }
+
+/* ===== PWA INSTALL BANNER ===== */
+#pwaInstallBanner {
+  display: none; position: fixed; bottom: 1rem; left: 50%; transform: translateX(-50%);
+  background: var(--primary); color: white; padding: 12px 20px; border-radius: 30px;
+  font-size: 0.85rem; font-weight: 600; z-index: 100; box-shadow: 0 4px 20px rgba(99,102,241,0.4);
+  display: flex; align-items: center; gap: 8px; cursor: pointer;
+}

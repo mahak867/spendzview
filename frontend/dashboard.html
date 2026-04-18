@@ -1,14 +1,27 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SpendSense Pro — Dashboard</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#6366f1">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js').catch(() => {});
+      });
+    }
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+  </script>
 </head>
 <body>
 <!-- SIDEBAR -->
@@ -24,20 +37,28 @@
   </div>
   <nav class="sidebar-nav">
     <div class="nav-item active" data-section="dashboard"><span class="nav-icon">📊</span>Dashboard</div>
+    <div class="nav-item" data-section="networth"><span class="nav-icon">💎</span>Net Worth</div>
+    <div class="nav-item" data-section="income"><span class="nav-icon">💰</span>Income</div>
     <div class="nav-item" data-section="expenses"><span class="nav-icon">💸</span>Expenses</div>
     <div class="nav-item" data-section="budget"><span class="nav-icon">🎯</span>Budget</div>
     <div class="nav-item" data-section="bills"><span class="nav-icon">🧾</span>Bills</div>
     <div class="nav-item" data-section="subscriptions"><span class="nav-icon">🔄</span>Subscriptions</div>
+    <div class="nav-item" data-section="creditcards"><span class="nav-icon">💳</span>Credit Cards</div>
+    <div class="nav-item" data-section="investments"><span class="nav-icon">📈</span>Investments</div>
+    <div class="nav-item" data-section="loans"><span class="nav-icon">🏦</span>Loans / EMI</div>
+    <div class="nav-item" data-section="split"><span class="nav-icon">🤝</span>Split Expenses</div>
+    <div class="nav-item" data-section="cashflow"><span class="nav-icon">📅</span>Cash Flow</div>
+    <div class="nav-item" data-section="tax"><span class="nav-icon">📋</span>Tax Planner</div>
     <div class="nav-item" data-section="shopping"><span class="nav-icon">🛍️</span>Shopping</div>
     <div class="nav-item" data-section="travel"><span class="nav-icon">✈️</span>Travel</div>
     <div class="nav-item" data-section="health"><span class="nav-icon">🏥</span>Health</div>
     <div class="nav-item" data-section="education"><span class="nav-icon">📚</span>Education</div>
     <div class="nav-item" data-section="insurance"><span class="nav-icon">🛡️</span>Insurance</div>
-    <div class="nav-item" data-section="savings"><span class="nav-icon">��</span>Savings</div>
+    <div class="nav-item" data-section="savings"><span class="nav-icon">🏛️</span>Savings</div>
     <div class="nav-item" data-section="banking"><span class="nav-icon">🏛️</span>Banking</div>
     <div class="nav-item" data-section="upi"><span class="nav-icon">📱</span>UPI Payments</div>
     <div class="nav-item" data-section="deepsearch"><span class="nav-icon">🔍</span>DeepSearch AI</div>
-    <div class="nav-item" data-section="reports"><span class="nav-icon">📈</span>Reports</div>
+    <div class="nav-item" data-section="reports"><span class="nav-icon">📊</span>Reports</div>
     <div class="nav-item" data-section="settings"><span class="nav-icon">⚙️</span>Settings</div>
   </nav>
   <div class="sidebar-user">
@@ -65,7 +86,16 @@
       <button id="menuToggle" class="btn-icon text-xl" onclick="toggleSidebar()">☰</button>
       <div class="text-sm text-slate-400" id="breadcrumb">Dashboard</div>
     </div>
-    <div class="flex items-center gap-3">
+    <!-- Global Search -->
+    <div class="flex-1 max-w-md mx-4 relative hidden md:block">
+      <input type="text" id="globalSearchInput" class="form-input w-full py-1.5 pl-8 text-sm" placeholder="🔍 Search expenses, bills, accounts..." oninput="globalSearch(this.value)" onblur="setTimeout(()=>hideGlobalSearch(),200)">
+      <div id="globalSearchResults" class="hidden absolute top-full left-0 right-0 mt-1 bg-slate-800 border border-slate-700 rounded-xl shadow-xl z-50 max-h-72 overflow-y-auto"></div>
+    </div>
+    <div class="flex items-center gap-2">
+      <!-- Theme Toggle -->
+      <button class="btn-icon text-lg" id="themeToggleBtn" onclick="toggleTheme()" title="Toggle theme">🌙</button>
+      <!-- Plan badge -->
+      <span id="planBadge" class="hidden text-xs px-2 py-1 rounded-full font-semibold bg-indigo-900 text-indigo-300 border border-indigo-700">FREE</span>
       <div class="relative">
         <button class="btn-icon text-xl relative" id="notifBell" onclick="toggleNotifDropdown()">
           🔔
@@ -112,12 +142,31 @@
         </div>
         <div class="stat-card">
           <div class="flex items-center justify-between mb-2">
+            <span class="text-slate-400 text-xs font-medium uppercase tracking-wide">Income</span>
+            <span class="text-2xl">💰</span>
+          </div>
+          <div class="text-2xl font-bold text-emerald-400" id="dashTotalIncome">₹0</div>
+          <div class="text-xs text-slate-500 mt-1" id="dashSavingsRate">Savings rate: 0%</div>
+        </div>
+        <div class="stat-card">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-slate-400 text-xs font-medium uppercase tracking-wide">Net Worth</span>
+            <span class="text-2xl">💎</span>
+          </div>
+          <div class="text-2xl font-bold text-violet-400" id="dashNetWorth">₹0</div>
+          <div class="text-xs text-slate-500 mt-1">Assets − Liabilities</div>
+        </div>
+        <div class="stat-card">
+          <div class="flex items-center justify-between mb-2">
             <span class="text-slate-400 text-xs font-medium uppercase tracking-wide">Budget Left</span>
             <span class="text-2xl">🎯</span>
           </div>
-          <div class="text-2xl font-bold text-emerald-400" id="dashBudgetRemaining">₹0</div>
+          <div class="text-2xl font-bold text-amber-400" id="dashBudgetRemaining">₹0</div>
           <div class="progress-wrap mt-2"><div class="progress-bar progress-green" id="dashBudgetBar" style="width:0%"></div></div>
         </div>
+      </div>
+      <!-- Second row stats -->
+      <div class="grid-cols-4 mb-5">
         <div class="stat-card">
           <div class="flex items-center justify-between mb-2">
             <span class="text-slate-400 text-xs font-medium uppercase tracking-wide">Upcoming Bills</span>
@@ -133,6 +182,22 @@
           </div>
           <div class="text-2xl font-bold text-violet-400" id="dashSavingsTotal">₹0</div>
           <div class="text-xs text-slate-500 mt-1" id="dashSavingsGoals">0 goals</div>
+        </div>
+        <div class="stat-card">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-slate-400 text-xs font-medium uppercase tracking-wide">Investments</span>
+            <span class="text-2xl">📈</span>
+          </div>
+          <div class="text-2xl font-bold text-cyan-400" id="dashInvestments">₹0</div>
+          <div class="text-xs text-emerald-500 mt-1" id="dashInvestmentGain">+0%</div>
+        </div>
+        <div class="stat-card">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-slate-400 text-xs font-medium uppercase tracking-wide">EMI / Month</span>
+            <span class="text-2xl">🏦</span>
+          </div>
+          <div class="text-2xl font-bold text-red-400" id="dashEMI">₹0</div>
+          <div class="text-xs text-slate-500 mt-1" id="dashLoanCount">0 active loans</div>
         </div>
       </div>
       <!-- Charts row -->
@@ -543,6 +608,201 @@
       </div>
     </section>
 
+    <!-- ===== NET WORTH ===== -->
+    <section id="section-networth" class="page-section">
+      <div class="section-header">
+        <div><h2 class="section-title">Net Worth</h2><p class="section-subtitle">Total assets minus liabilities</p></div>
+        <button class="btn-secondary btn-sm" onclick="loadNetWorth()">↻ Refresh</button>
+      </div>
+      <div class="grid-cols-3 mb-5">
+        <div class="stat-card text-center">
+          <div class="text-xs text-slate-500 mb-1 uppercase tracking-wide">Net Worth</div>
+          <div class="text-3xl font-bold text-violet-400" id="nwNetWorth">₹0</div>
+        </div>
+        <div class="stat-card text-center">
+          <div class="text-xs text-slate-500 mb-1 uppercase tracking-wide">Total Assets</div>
+          <div class="text-3xl font-bold text-emerald-400" id="nwAssets">₹0</div>
+        </div>
+        <div class="stat-card text-center">
+          <div class="text-xs text-slate-500 mb-1 uppercase tracking-wide">Total Liabilities</div>
+          <div class="text-3xl font-bold text-red-400" id="nwLiabilities">₹0</div>
+        </div>
+      </div>
+      <div class="grid-cols-2 mb-5">
+        <div class="section-card">
+          <div class="px-5 py-3 border-b border-slate-700"><h3 class="font-semibold text-sm text-white">Assets Breakdown</h3></div>
+          <div class="p-5" id="nwAssetsBreakdown"></div>
+        </div>
+        <div class="section-card">
+          <div class="px-5 py-3 border-b border-slate-700"><h3 class="font-semibold text-sm text-white">Liabilities Breakdown</h3></div>
+          <div class="p-5" id="nwLiabilitiesBreakdown"></div>
+        </div>
+      </div>
+      <div class="chart-card">
+        <h3 class="font-semibold text-sm text-slate-300 mb-3">Net Worth Trend (6 Months)</h3>
+        <div class="chart-container" style="height:220px"><canvas id="netWorthChart"></canvas></div>
+      </div>
+    </section>
+
+    <!-- ===== INCOME ===== -->
+    <section id="section-income" class="page-section">
+      <div class="section-header">
+        <div><h2 class="section-title">Income</h2><p class="section-subtitle">Track all income sources and cash flow</p></div>
+        <button class="btn-primary" onclick="openIncomeModal()">+ Add Income</button>
+      </div>
+      <div class="grid-cols-4 mb-4">
+        <div class="stat-card text-center"><div class="text-xl font-bold text-emerald-400" id="incomeThisMonth">₹0</div><div class="text-xs text-slate-500">This Month Income</div></div>
+        <div class="stat-card text-center"><div class="text-xl font-bold text-red-400" id="incomeExpThisMonth">₹0</div><div class="text-xs text-slate-500">This Month Expense</div></div>
+        <div class="stat-card text-center"><div class="text-xl font-bold text-violet-400" id="incomeNetFlow">₹0</div><div class="text-xs text-slate-500">Net Cash Flow</div></div>
+        <div class="stat-card text-center"><div class="text-xl font-bold text-amber-400" id="incomeSavingsRate">0%</div><div class="text-xs text-slate-500">Savings Rate</div></div>
+      </div>
+      <div class="grid-cols-2 mb-4">
+        <div class="chart-card">
+          <h3 class="font-semibold text-sm text-slate-300 mb-3">Income vs Expenses (6 Months)</h3>
+          <div class="chart-container" style="height:220px"><canvas id="incomeVsExpChart"></canvas></div>
+        </div>
+        <div class="section-card">
+          <div class="px-5 py-3 border-b border-slate-700"><h3 class="font-semibold text-sm text-white">Income by Source</h3></div>
+          <div class="p-4" id="incomeSourcesList"></div>
+        </div>
+      </div>
+      <div class="section-card">
+        <div class="table-wrap">
+          <table class="data-table" id="incomeTable">
+            <thead><tr><th>Date</th><th>Source</th><th>Category</th><th>Description</th><th>Amount</th><th>Actions</th></tr></thead>
+            <tbody><tr><td colspan="6" class="empty-state"><div class="empty-icon">💰</div>No income records yet</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== INVESTMENTS ===== -->
+    <section id="section-investments" class="page-section">
+      <div class="section-header">
+        <div><h2 class="section-title">Investment Portfolio</h2><p class="section-subtitle">Track mutual funds, stocks, FDs, crypto and more</p></div>
+        <button class="btn-primary" onclick="openInvestmentModal()">+ Add Investment</button>
+      </div>
+      <div class="grid-cols-4 mb-4">
+        <div class="stat-card text-center"><div class="text-xl font-bold text-white" id="invTotalInvested">₹0</div><div class="text-xs text-slate-500">Total Invested</div></div>
+        <div class="stat-card text-center"><div class="text-xl font-bold text-cyan-400" id="invCurrentValue">₹0</div><div class="text-xs text-slate-500">Current Value</div></div>
+        <div class="stat-card text-center"><div class="text-xl font-bold" id="invGainLoss">₹0</div><div class="text-xs text-slate-500">Gain / Loss</div></div>
+        <div class="stat-card text-center"><div class="text-xl font-bold" id="invGainPct">0%</div><div class="text-xs text-slate-500">Returns</div></div>
+      </div>
+      <div class="grid-cols-2 mb-4">
+        <div class="chart-card">
+          <h3 class="font-semibold text-sm text-slate-300 mb-3">Portfolio by Type</h3>
+          <div class="chart-container" style="height:220px"><canvas id="investmentTypeChart"></canvas></div>
+        </div>
+        <div class="section-card">
+          <div class="px-5 py-3 border-b border-slate-700"><h3 class="font-semibold text-sm text-white">Top Holdings</h3></div>
+          <div id="topHoldingsList" class="p-4"></div>
+        </div>
+      </div>
+      <div class="section-card">
+        <div class="table-wrap">
+          <table class="data-table" id="investmentsTable">
+            <thead><tr><th>Name</th><th>Type</th><th>Invested</th><th>Current</th><th>Gain/Loss</th><th>Platform</th><th>Actions</th></tr></thead>
+            <tbody><tr><td colspan="7" class="empty-state"><div class="empty-icon">📈</div>No investments yet</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== LOANS / EMI ===== -->
+    <section id="section-loans" class="page-section">
+      <div class="section-header">
+        <div><h2 class="section-title">Loans & EMI</h2><p class="section-subtitle">Track outstanding loans and repayment schedules</p></div>
+        <button class="btn-primary" onclick="openLoanModal()">+ Add Loan</button>
+      </div>
+      <div class="grid-cols-4 mb-4">
+        <div class="stat-card text-center"><div class="text-xl font-bold text-white" id="loanCount">0</div><div class="text-xs text-slate-500">Active Loans</div></div>
+        <div class="stat-card text-center"><div class="text-xl font-bold text-red-400" id="loanOutstanding">₹0</div><div class="text-xs text-slate-500">Total Outstanding</div></div>
+        <div class="stat-card text-center"><div class="text-xl font-bold text-amber-400" id="loanMonthlyEMI">₹0</div><div class="text-xs text-slate-500">Monthly EMI Total</div></div>
+        <div class="stat-card text-center"><div class="text-xl font-bold text-emerald-400" id="loanOriginalPrincipal">₹0</div><div class="text-xs text-slate-500">Original Principal</div></div>
+      </div>
+      <div id="loansList" class="space-y-3 mb-4"></div>
+      <!-- EMI Schedule modal trigger area -->
+      <div id="loanScheduleArea" class="hidden section-card">
+        <div class="px-5 py-3 border-b border-slate-700 flex justify-between items-center">
+          <h3 class="font-semibold text-sm text-white">EMI Amortization Schedule</h3>
+          <button class="btn-secondary btn-sm" onclick="document.getElementById('loanScheduleArea').classList.add('hidden')">✕ Close</button>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table" id="loanScheduleTable">
+            <thead><tr><th>#</th><th>Due Date</th><th>EMI</th><th>Principal</th><th>Interest</th><th>Balance</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== CREDIT CARDS ===== -->
+    <section id="section-creditcards" class="page-section">
+      <div class="section-header">
+        <div><h2 class="section-title">Credit Cards</h2><p class="section-subtitle">Track cards, utilization and due dates</p></div>
+        <button class="btn-primary" onclick="openCreditCardModal()">+ Add Card</button>
+      </div>
+      <div class="grid-cols-4 mb-4">
+        <div class="stat-card text-center"><div class="text-xl font-bold text-white" id="ccTotalLimit">₹0</div><div class="text-xs text-slate-500">Total Credit Limit</div></div>
+        <div class="stat-card text-center"><div class="text-xl font-bold text-red-400" id="ccTotalOutstanding">₹0</div><div class="text-xs text-slate-500">Total Outstanding</div></div>
+        <div class="stat-card text-center"><div class="text-xl font-bold text-amber-400" id="ccUtilization">0%</div><div class="text-xs text-slate-500">Credit Utilization</div></div>
+        <div class="stat-card text-center"><div class="text-xl font-bold text-violet-400" id="ccRewardPoints">0</div><div class="text-xs text-slate-500">Total Reward Points</div></div>
+      </div>
+      <div id="creditCardsList" class="grid-cols-2 gap-4"></div>
+    </section>
+
+    <!-- ===== SPLIT EXPENSES ===== -->
+    <section id="section-split" class="page-section">
+      <div class="section-header">
+        <div><h2 class="section-title">Split Expenses</h2><p class="section-subtitle">Split bills and track who owes what</p></div>
+        <button class="btn-primary" onclick="openSplitModal()">+ New Split</button>
+      </div>
+      <div id="splitList" class="space-y-4"></div>
+    </section>
+
+    <!-- ===== CASH FLOW CALENDAR ===== -->
+    <section id="section-cashflow" class="page-section">
+      <div class="section-header">
+        <div><h2 class="section-title">Cash Flow Calendar</h2><p class="section-subtitle">Upcoming bills, EMIs, subscriptions and income in the next 30 days</p></div>
+        <button class="btn-secondary btn-sm" onclick="loadCashFlow()">↻ Refresh</button>
+      </div>
+      <div class="grid-cols-3 mb-5">
+        <div class="stat-card text-center"><div class="text-xl font-bold text-emerald-400" id="cfIncoming">₹0</div><div class="text-xs text-slate-500">Expected Income (30d)</div></div>
+        <div class="stat-card text-center"><div class="text-xl font-bold text-red-400" id="cfOutgoing">₹0</div><div class="text-xs text-slate-500">Expected Outflow (30d)</div></div>
+        <div class="stat-card text-center"><div class="text-xl font-bold" id="cfNet">₹0</div><div class="text-xs text-slate-500">Net Cash Flow</div></div>
+      </div>
+      <div id="cashFlowTimeline" class="space-y-2"></div>
+    </section>
+
+    <!-- ===== TAX PLANNER ===== -->
+    <section id="section-tax" class="page-section">
+      <div class="section-header">
+        <div><h2 class="section-title">Tax Planner</h2><p class="section-subtitle">Estimate tax liability and track deductions</p></div>
+        <button class="btn-secondary btn-sm" onclick="loadTax()">↻ Recalculate</button>
+      </div>
+      <div id="taxYear" class="text-sm text-slate-400 mb-4"></div>
+      <div class="grid-cols-2 mb-5">
+        <div class="section-card">
+          <div class="px-5 py-3 border-b border-slate-700"><h3 class="font-semibold text-sm text-white">Income & Tax</h3></div>
+          <div class="p-5" id="taxIncomeSection"></div>
+        </div>
+        <div class="section-card">
+          <div class="px-5 py-3 border-b border-slate-700"><h3 class="font-semibold text-sm text-white">Deductions</h3></div>
+          <div class="p-5" id="taxDeductionsSection"></div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="grid-cols-3">
+          <div><div class="text-xs text-slate-500 mb-1">Taxable Income</div><div class="text-2xl font-bold text-amber-400" id="taxTaxableIncome">₹0</div></div>
+          <div><div class="text-xs text-slate-500 mb-1">Estimated Tax</div><div class="text-2xl font-bold text-red-400" id="taxEstimated">₹0</div></div>
+          <div><div class="text-xs text-slate-500 mb-1">Effective Rate</div><div class="text-2xl font-bold text-white" id="taxEffectiveRate">0%</div></div>
+        </div>
+        <div class="mt-4 p-3 bg-indigo-900/20 border border-indigo-800 rounded-lg">
+          <p class="text-xs text-indigo-300">💡 Tip: Add more ELSS/PPF investments to reduce 80C deductions. Add health insurance to claim 80D.</p>
+        </div>
+      </div>
+    </section>
+
     <!-- ===== REPORTS ===== -->
     <section id="section-reports" class="page-section">
       <div class="section-header">
@@ -616,9 +876,31 @@
                 <label class="form-label">Monthly Income</label>
                 <input type="number" class="form-input" id="settingsIncome" placeholder="0">
               </div>
+              <div class="form-group">
+                <label class="form-label">Theme</label>
+                <div class="flex gap-2">
+                  <button onclick="setTheme('dark')" id="btnDarkTheme" class="btn-secondary btn-sm flex-1">🌙 Dark</button>
+                  <button onclick="setTheme('light')" id="btnLightTheme" class="btn-secondary btn-sm flex-1">☀️ Light</button>
+                </div>
+              </div>
               <button class="btn-primary w-full" onclick="savePreferences()">Save Preferences</button>
             </div>
           </div>
+          <!-- Plan / Subscription -->
+          <div class="section-card mb-4">
+            <div class="px-5 py-3 border-b border-slate-700"><h3 class="font-semibold text-sm text-white">Subscription Plan</h3></div>
+            <div class="p-5">
+              <div class="flex items-center justify-between mb-3">
+                <div>
+                  <div class="font-semibold text-white" id="currentPlanLabel">Free Plan</div>
+                  <div class="text-xs text-slate-500" id="planExpiresLabel"></div>
+                </div>
+                <span id="currentPlanBadge" class="text-xs px-2 py-1 rounded-full bg-slate-700 text-slate-300 font-semibold">FREE</span>
+              </div>
+              <button class="btn-primary w-full" onclick="openUpgradeModal()">⬆️ Upgrade to Pro</button>
+            </div>
+          </div>
+          <!-- Account -->
           <div class="section-card">
             <div class="px-5 py-3 border-b border-slate-700"><h3 class="font-semibold text-sm text-red-400">Danger Zone</h3></div>
             <div class="p-5">
@@ -627,6 +909,15 @@
                 <input type="file" class="form-input" id="importJsonInput" accept=".json" onchange="importJSON(this)">
               </div>
               <p class="text-xs text-slate-500 mb-3">Importing will add records to your existing data.</p>
+              <div class="flex gap-2">
+                <a href="/api/privacy/export" target="_blank" class="btn-secondary btn-sm flex-1 text-center">📦 Export My Data</a>
+                <button class="btn-sm flex-1 text-red-400 border border-red-800 rounded-lg bg-red-900/10" onclick="deleteAccount()">🗑️ Delete Account</button>
+              </div>
+              <div class="mt-3">
+                <a href="/privacy" target="_blank" class="text-xs text-indigo-400 hover:underline">Privacy Policy</a>
+                <span class="text-xs text-slate-600 mx-2">·</span>
+                <a href="/admin" target="_blank" class="text-xs text-slate-500 hover:underline">Admin Dashboard</a>
+              </div>
             </div>
           </div>
         </div>
@@ -1063,6 +1354,270 @@
     <div class="modal-footer">
       <button class="btn-secondary" onclick="closeModal('upiModal')">Cancel</button>
       <button class="btn-primary" onclick="saveUpiPayment()">Save</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ===== INCOME MODAL ===== -->
+<div id="incomeModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-header"><h3 id="incomeModalTitle">Add Income</h3><button class="modal-close" onclick="closeModal('incomeModal')">✕</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="incomeEditId">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Amount (₹) *</label><input type="number" class="form-input" id="incomeAmount" placeholder="0.00" step="0.01"></div>
+        <div class="form-group"><label class="form-label">Date *</label><input type="date" class="form-input" id="incomeDate"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Source *</label><input type="text" class="form-input" id="incomeSource" placeholder="Salary, Freelance, Dividend..."></div>
+        <div class="form-group"><label class="form-label">Category</label>
+          <select class="form-select" id="incomeCat">
+            <option>Salary</option><option>Freelance</option><option>Business</option><option>Investment</option><option>Rental</option><option>Gift</option><option>Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">Description</label><input type="text" class="form-input" id="incomeDescription" placeholder="Details..."></div>
+      <div class="flex items-center gap-3">
+        <input type="checkbox" id="incomeRecurring" class="w-4 h-4">
+        <label class="form-label mb-0 cursor-pointer" for="incomeRecurring">Recurring income</label>
+        <select class="form-select w-32" id="incomeInterval" style="display:none"><option value="monthly">Monthly</option><option value="weekly">Weekly</option><option value="yearly">Yearly</option></select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('incomeModal')">Cancel</button>
+      <button class="btn-primary" onclick="saveIncome()">Save Income</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== INVESTMENT MODAL ===== -->
+<div id="investmentModal" class="modal-overlay">
+  <div class="modal-content modal-lg">
+    <div class="modal-header"><h3 id="investmentModalTitle">Add Investment</h3><button class="modal-close" onclick="closeModal('investmentModal')">✕</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="investmentEditId">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Name *</label><input type="text" class="form-input" id="invName" placeholder="Axis Bluechip Fund, HDFC Bank..."></div>
+        <div class="form-group"><label class="form-label">Type *</label>
+          <select class="form-select" id="invType">
+            <option>Mutual Fund</option><option>ELSS</option><option>PPF</option><option>NPS</option><option>Stocks</option><option>ETF</option><option>FD</option><option>RD</option><option>Gold</option><option>Crypto</option><option>Real Estate</option><option>Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Invested Amount (₹) *</label><input type="number" class="form-input" id="invInvested" placeholder="0.00"></div>
+        <div class="form-group"><label class="form-label">Current Value (₹)</label><input type="number" class="form-input" id="invCurrentValue" placeholder="Leave blank if same"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Units / Qty</label><input type="number" class="form-input" id="invUnits" placeholder="Units held"></div>
+        <div class="form-group"><label class="form-label">Platform</label><input type="text" class="form-input" id="invPlatform" placeholder="Zerodha, Groww, SBI..."></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Start Date</label><input type="date" class="form-input" id="invStartDate"></div>
+        <div class="form-group"><label class="form-label">Maturity Date</label><input type="date" class="form-input" id="invMaturityDate"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">SIP Amount (₹/month)</label><input type="number" class="form-input" id="invSipAmount" placeholder="0"></div>
+        <div class="form-group"><label class="form-label">SIP Date (day of month)</label><input type="number" class="form-input" id="invSipDate" placeholder="e.g. 5" min="1" max="31"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Folio / Account Number</label><input type="text" class="form-input" id="invFolio"></div>
+      <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="invNotes" style="min-height:60px"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('investmentModal')">Cancel</button>
+      <button class="btn-primary" onclick="saveInvestment()">Save Investment</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== LOAN MODAL ===== -->
+<div id="loanModal" class="modal-overlay">
+  <div class="modal-content modal-lg">
+    <div class="modal-header"><h3 id="loanModalTitle">Add Loan</h3><button class="modal-close" onclick="closeModal('loanModal')">✕</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="loanEditId">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Loan Name *</label><input type="text" class="form-input" id="loanName" placeholder="Home Loan, Car Loan..."></div>
+        <div class="form-group"><label class="form-label">Type *</label>
+          <select class="form-select" id="loanType">
+            <option>Home Loan</option><option>Car Loan</option><option>Personal Loan</option><option>Education Loan</option><option>Business Loan</option><option>Gold Loan</option><option>Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Principal Amount (₹) *</label><input type="number" class="form-input" id="loanPrincipal" placeholder="0.00"></div>
+        <div class="form-group"><label class="form-label">Outstanding Amount (₹) *</label><input type="number" class="form-input" id="loanOutstanding" placeholder="Current balance"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Interest Rate (% p.a.) *</label><input type="number" class="form-input" id="loanRate" placeholder="8.5" step="0.01"></div>
+        <div class="form-group"><label class="form-label">Tenure (months)</label><input type="number" class="form-input" id="loanTenure" placeholder="240"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">EMI Amount (₹)</label><input type="number" class="form-input" id="loanEMI" placeholder="Auto-calculated if blank"></div>
+        <div class="form-group"><label class="form-label">Lender</label><input type="text" class="form-input" id="loanLender" placeholder="SBI, HDFC, LIC Housing..."></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Start Date</label><input type="date" class="form-input" id="loanStartDate"></div>
+        <div class="form-group"><label class="form-label">Next EMI Date</label><input type="date" class="form-input" id="loanNextEMI"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="loanNotes" style="min-height:60px"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('loanModal')">Cancel</button>
+      <button class="btn-primary" onclick="saveLoan()">Save Loan</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== CREDIT CARD MODAL ===== -->
+<div id="creditCardModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-header"><h3 id="ccModalTitle">Add Credit Card</h3><button class="modal-close" onclick="closeModal('creditCardModal')">✕</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="ccEditId">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Card Name *</label><input type="text" class="form-input" id="ccName" placeholder="HDFC Regalia, SBI SimplyCLICK..."></div>
+        <div class="form-group"><label class="form-label">Bank *</label><input type="text" class="form-input" id="ccBank" placeholder="HDFC, SBI, Axis..."></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Last 4 Digits</label><input type="text" class="form-input" id="ccLast4" placeholder="XXXX" maxlength="4"></div>
+        <div class="form-group"><label class="form-label">Credit Limit (₹)</label><input type="number" class="form-input" id="ccLimit" placeholder="100000"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Outstanding (₹)</label><input type="number" class="form-input" id="ccOutstanding" placeholder="0"></div>
+        <div class="form-group"><label class="form-label">Payment Due Date</label><input type="date" class="form-input" id="ccDueDate"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Statement Date</label><input type="date" class="form-input" id="ccStatementDate"></div>
+        <div class="form-group"><label class="form-label">Reward Points</label><input type="number" class="form-input" id="ccPoints" placeholder="0"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="ccNotes" style="min-height:60px"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('creditCardModal')">Cancel</button>
+      <button class="btn-primary" onclick="saveCreditCard()">Save Card</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SPLIT EXPENSE MODAL ===== -->
+<div id="splitModal" class="modal-overlay">
+  <div class="modal-content modal-lg">
+    <div class="modal-header"><h3>New Split Expense</h3><button class="modal-close" onclick="closeModal('splitModal')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Title *</label><input type="text" class="form-input" id="splitTitle" placeholder="Goa Trip, Dinner at..."></div>
+        <div class="form-group"><label class="form-label">Total Amount (₹) *</label><input type="number" class="form-input" id="splitAmount"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Date *</label><input type="date" class="form-input" id="splitDate"></div>
+        <div class="form-group"><label class="form-label">Group Name</label><input type="text" class="form-input" id="splitGroup" placeholder="Friends, Family..."></div>
+      </div>
+      <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="splitNotes" style="min-height:50px"></textarea></div>
+      <div class="divider"></div>
+      <div class="flex items-center justify-between mb-3">
+        <h4 class="text-sm font-semibold text-slate-300">Participants</h4>
+        <button type="button" class="btn-secondary btn-sm" onclick="addSplitParticipant()">+ Add Person</button>
+      </div>
+      <div id="splitParticipants" class="space-y-2">
+        <div class="flex gap-2 items-center split-participant-row">
+          <input type="text" class="form-input flex-1" placeholder="Name" data-field="name">
+          <input type="number" class="form-input w-32" placeholder="Share ₹" data-field="share">
+          <button type="button" onclick="this.closest('.split-participant-row').remove()" class="text-red-400 text-lg">✕</button>
+        </div>
+        <div class="flex gap-2 items-center split-participant-row">
+          <input type="text" class="form-input flex-1" placeholder="Name" data-field="name">
+          <input type="number" class="form-input w-32" placeholder="Share ₹" data-field="share">
+          <button type="button" onclick="this.closest('.split-participant-row').remove()" class="text-red-400 text-lg">✕</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('splitModal')">Cancel</button>
+      <button class="btn-primary" onclick="saveSplit()">Create Split</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== UPGRADE / RAZORPAY MODAL ===== -->
+<div id="upgradeModal" class="modal-overlay">
+  <div class="modal-content" style="max-width:500px">
+    <div class="modal-header"><h3>⬆️ Upgrade to Pro</h3><button class="modal-close" onclick="closeModal('upgradeModal')">✕</button></div>
+    <div class="modal-body">
+      <div class="text-center mb-4">
+        <div class="text-slate-400 text-sm">Unlock investments, loans, AI insights, tax planner, and more</div>
+      </div>
+      <div class="space-y-3" id="planCards">
+        <div class="section-card cursor-pointer hover:border-indigo-500 transition-all plan-card" data-plan="pro_monthly" onclick="selectPlan('pro_monthly')">
+          <div class="flex items-center justify-between p-4">
+            <div><div class="font-semibold text-white">Pro Monthly</div><div class="text-xs text-slate-400">All features unlocked</div></div>
+            <div class="text-right"><div class="text-2xl font-bold text-indigo-400">₹299</div><div class="text-xs text-slate-500">/month</div></div>
+          </div>
+        </div>
+        <div class="section-card cursor-pointer hover:border-emerald-500 transition-all plan-card border-emerald-700" data-plan="pro_yearly" onclick="selectPlan('pro_yearly')">
+          <div class="flex items-center justify-between p-4">
+            <div><div class="font-semibold text-white">Pro Yearly <span class="text-xs bg-emerald-900 text-emerald-400 px-2 py-0.5 rounded-full ml-2">SAVE 16%</span></div><div class="text-xs text-slate-400">All features unlocked</div></div>
+            <div class="text-right"><div class="text-2xl font-bold text-emerald-400">₹2,999</div><div class="text-xs text-slate-500">/year</div></div>
+          </div>
+        </div>
+        <div class="section-card cursor-pointer hover:border-amber-500 transition-all plan-card" data-plan="family" onclick="selectPlan('family')">
+          <div class="flex items-center justify-between p-4">
+            <div><div class="font-semibold text-white">Family Plan</div><div class="text-xs text-slate-400">Up to 5 members</div></div>
+            <div class="text-right"><div class="text-2xl font-bold text-amber-400">₹499</div><div class="text-xs text-slate-500">/month</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="mt-3 text-xs text-slate-500 text-center">Secure payments via Razorpay · Cancel anytime</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('upgradeModal')">Cancel</button>
+      <button class="btn-primary" id="payNowBtn" onclick="initiatePayment()">Pay Now</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ONBOARDING WIZARD ===== -->
+<div id="onboardingModal" class="modal-overlay" style="z-index:9999">
+  <div class="modal-content" style="max-width:520px">
+    <div class="modal-body p-6">
+      <div class="text-center mb-6">
+        <div style="font-size:3rem;margin-bottom:1rem">👋</div>
+        <h2 class="text-2xl font-bold text-white mb-2">Welcome to SpendSense Pro!</h2>
+        <p class="text-slate-400 text-sm">Let's set up your financial profile in 3 quick steps.</p>
+      </div>
+      <!-- Step indicators -->
+      <div class="flex justify-center gap-2 mb-6">
+        <div class="onboarding-step active" id="ob-step1-dot"></div>
+        <div class="onboarding-step" id="ob-step2-dot"></div>
+        <div class="onboarding-step" id="ob-step3-dot"></div>
+      </div>
+      <!-- Step 1 -->
+      <div id="ob-step1">
+        <h3 class="text-lg font-semibold text-white mb-4">1. Tell us about yourself</h3>
+        <div class="form-group"><label class="form-label">Your Monthly Income (₹)</label><input type="number" class="form-input" id="obIncome" placeholder="e.g. 50000"></div>
+        <div class="form-group"><label class="form-label">Primary Currency</label>
+          <select class="form-select" id="obCurrency"><option value="INR">₹ Indian Rupee (INR)</option><option value="USD">$ USD</option><option value="EUR">€ EUR</option><option value="GBP">£ GBP</option></select>
+        </div>
+      </div>
+      <!-- Step 2 -->
+      <div id="ob-step2" class="hidden">
+        <h3 class="text-lg font-semibold text-white mb-4">2. Set a monthly budget</h3>
+        <div class="form-group"><label class="form-label">Total Monthly Budget (₹)</label><input type="number" class="form-input" id="obBudget" placeholder="e.g. 30000"></div>
+        <p class="text-xs text-slate-500 mt-2">This helps SpendSense Pro alert you when you're close to your limit.</p>
+      </div>
+      <!-- Step 3 -->
+      <div id="ob-step3" class="hidden">
+        <h3 class="text-lg font-semibold text-white mb-4">3. Add first savings goal</h3>
+        <div class="form-group"><label class="form-label">Goal Name</label><input type="text" class="form-input" id="obGoalName" placeholder="Emergency Fund, Vacation..."></div>
+        <div class="form-group"><label class="form-label">Target Amount (₹)</label><input type="number" class="form-input" id="obGoalAmount" placeholder="e.g. 100000"></div>
+        <p class="text-xs text-slate-500 mt-2">You can skip this and add goals later.</p>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" id="obPrev" onclick="obPrev()" style="display:none">← Back</button>
+      <button class="btn-secondary" onclick="skipOnboarding()">Skip for now</button>
+      <button class="btn-primary" id="obNext" onclick="obNext()">Next →</button>
     </div>
   </div>
 </div>
