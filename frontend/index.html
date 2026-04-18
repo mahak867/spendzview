@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SpendSense Pro — Login</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
+    body {
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .glass {
+      background: rgba(255,255,255,0.05);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .input-field {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: white;
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border-radius: 0.5rem;
+      outline: none;
+      transition: all 0.2s;
+      font-size: 0.875rem;
+    }
+    .input-field:focus { border-color: #6366f1; background: rgba(255,255,255,0.1); box-shadow: 0 0 0 3px rgba(99,102,241,0.2); }
+    .input-field::placeholder { color: rgba(255,255,255,0.35); }
+    .btn-primary {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: white;
+      border: none;
+      width: 100%;
+      padding: 0.75rem;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 10px 30px rgba(99,102,241,0.5); }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-primary:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+    .tab-btn {
+      flex: 1; padding: 0.6rem; border: none; background: transparent;
+      color: rgba(255,255,255,0.5); font-weight: 500; cursor: pointer; border-radius: 0.375rem;
+      transition: all 0.2s; font-family: 'Inter', sans-serif; font-size: 0.875rem;
+    }
+    .tab-btn.active { background: rgba(99,102,241,0.3); color: white; }
+    .strength-bar { height: 4px; border-radius: 2px; transition: all 0.3s; }
+    @keyframes float { 0%,100% { transform: translateY(0px); } 50% { transform: translateY(-8px); } }
+    .float-anim { animation: float 4s ease-in-out infinite; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .fade-in { animation: fadeIn 0.3s ease; }
+    .show-password-btn {
+      position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%);
+      background: none; border: none; cursor: pointer; color: rgba(255,255,255,0.4);
+      font-size: 1rem; transition: color 0.2s;
+    }
+    .show-password-btn:hover { color: rgba(255,255,255,0.8); }
+  </style>
+</head>
+<body>
+  <!-- Animated background particles -->
+  <div class="fixed inset-0 overflow-hidden pointer-events-none">
+    <div class="absolute top-1/4 left-1/4 w-64 h-64 bg-indigo-600/10 rounded-full blur-3xl float-anim"></div>
+    <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-violet-600/8 rounded-full blur-3xl float-anim" style="animation-delay:2s"></div>
+    <div class="absolute top-3/4 left-1/2 w-48 h-48 bg-indigo-400/5 rounded-full blur-2xl float-anim" style="animation-delay:1s"></div>
+  </div>
+
+  <div class="w-full max-w-md relative">
+    <!-- Logo -->
+    <div class="text-center mb-8 fade-in">
+      <div class="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 mb-4 shadow-2xl shadow-indigo-500/40 float-anim">
+        <span class="text-4xl">💰</span>
+      </div>
+      <h1 class="text-3xl font-bold bg-gradient-to-r from-indigo-400 via-violet-400 to-purple-400 bg-clip-text text-transparent">SpendSense Pro</h1>
+      <p class="text-slate-400 mt-1 text-sm">Your complete financial intelligence platform</p>
+    </div>
+
+    <!-- Card -->
+    <div class="glass rounded-2xl p-8 shadow-2xl fade-in" style="animation-delay:0.1s">
+      <!-- Tabs -->
+      <div class="flex gap-1 p-1 bg-slate-800/60 rounded-xl mb-6">
+        <button class="tab-btn active" id="loginTab" onclick="switchTab('login')">Sign In</button>
+        <button class="tab-btn" id="registerTab" onclick="switchTab('register')">Create Account</button>
+      </div>
+
+      <!-- Error / Success messages -->
+      <div id="authError" class="hidden mb-4 p-3 rounded-lg bg-red-500/15 border border-red-500/30 text-red-400 text-sm flex items-start gap-2">
+        <span class="mt-0.5">⚠️</span>
+        <span id="authErrorMsg"></span>
+      </div>
+      <div id="authSuccess" class="hidden mb-4 p-3 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-sm flex items-center gap-2">
+        <span>✅</span>
+        <span id="authSuccessMsg"></span>
+      </div>
+
+      <!-- Login Form -->
+      <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4 fade-in">
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-1.5">Email Address</label>
+          <input id="loginEmail" type="email" class="input-field" placeholder="you@example.com" autocomplete="email" required>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-1.5">Password</label>
+          <div class="relative">
+            <input id="loginPassword" type="password" class="input-field pr-10" placeholder="Enter your password" autocomplete="current-password" required>
+            <button type="button" class="show-password-btn" onclick="togglePasswordVisibility('loginPassword', this)">👁</button>
+          </div>
+        </div>
+        <div class="flex items-center justify-between">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" class="w-4 h-4 rounded border-slate-600 bg-slate-700 text-indigo-500">
+            <span class="text-sm text-slate-400">Remember me</span>
+          </label>
+          <a href="#" class="text-sm text-indigo-400 hover:text-indigo-300 transition-colors">Forgot password?</a>
+        </div>
+        <button type="submit" id="loginBtn" class="btn-primary mt-2">
+          <span id="loginBtnText">Sign In to Dashboard</span>
+        </button>
+      </form>
+
+      <!-- Register Form -->
+      <form id="registerForm" onsubmit="handleRegister(event)" class="space-y-4 hidden fade-in">
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-1.5">Full Name</label>
+          <input id="regName" type="text" class="input-field" placeholder="John Doe" autocomplete="name" required>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-1.5">Email Address</label>
+          <input id="regEmail" type="email" class="input-field" placeholder="you@example.com" autocomplete="email" required>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-1.5">Password</label>
+          <div class="relative">
+            <input id="regPassword" type="password" class="input-field pr-10" placeholder="At least 6 characters" autocomplete="new-password" required oninput="checkPasswordStrength(this.value)">
+            <button type="button" class="show-password-btn" onclick="togglePasswordVisibility('regPassword', this)">👁</button>
+          </div>
+          <!-- Password strength indicator -->
+          <div class="mt-2 flex gap-1" id="strengthBars">
+            <div class="strength-bar flex-1 bg-slate-700" id="sb1"></div>
+            <div class="strength-bar flex-1 bg-slate-700" id="sb2"></div>
+            <div class="strength-bar flex-1 bg-slate-700" id="sb3"></div>
+            <div class="strength-bar flex-1 bg-slate-700" id="sb4"></div>
+          </div>
+          <p class="text-xs text-slate-500 mt-1" id="strengthText"></p>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-1.5">Phone Number <span class="text-slate-500">(optional)</span></label>
+          <input id="regPhone" type="tel" class="input-field" placeholder="+91 98765 43210" autocomplete="tel">
+        </div>
+        <button type="submit" id="registerBtn" class="btn-primary mt-2">
+          <span id="registerBtnText">Create My Account</span>
+        </button>
+        <p class="text-xs text-center text-slate-500">By registering, you agree to our Terms of Service and Privacy Policy</p>
+      </form>
+
+      <!-- Demo note -->
+      <div class="mt-5 pt-5 border-t border-slate-700/50 text-center">
+        <p class="text-xs text-slate-500">
+          🔒 Your financial data is stored locally and never shared
+        </p>
+      </div>
+    </div>
+
+    <!-- Features strip -->
+    <div class="mt-6 grid grid-cols-3 gap-3 fade-in" style="animation-delay:0.2s">
+      <div class="glass rounded-xl p-3 text-center">
+        <div class="text-2xl mb-1">📊</div>
+        <p class="text-xs text-slate-400">Smart Analytics</p>
+      </div>
+      <div class="glass rounded-xl p-3 text-center">
+        <div class="text-2xl mb-1">🔔</div>
+        <p class="text-xs text-slate-400">Bill Reminders</p>
+      </div>
+      <div class="glass rounded-xl p-3 text-center">
+        <div class="text-2xl mb-1">🔍</div>
+        <p class="text-xs text-slate-400">AI DeepSearch</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Check if already logged in
+    (async function() {
+      try {
+        const r = await fetch('/api/auth/me');
+        if (r.ok) window.location.href = '/dashboard';
+      } catch(e) {}
+    })();
+
+    function switchTab(tab) {
+      const isLogin = tab === 'login';
+      document.getElementById('loginForm').classList.toggle('hidden', !isLogin);
+      document.getElementById('registerForm').classList.toggle('hidden', isLogin);
+      document.getElementById('loginTab').classList.toggle('active', isLogin);
+      document.getElementById('registerTab').classList.toggle('active', !isLogin);
+      hideMessages();
+    }
+
+    function showError(msg) {
+      document.getElementById('authErrorMsg').textContent = msg;
+      document.getElementById('authError').classList.remove('hidden');
+      document.getElementById('authSuccess').classList.add('hidden');
+    }
+
+    function showSuccess(msg) {
+      document.getElementById('authSuccessMsg').textContent = msg;
+      document.getElementById('authSuccess').classList.remove('hidden');
+      document.getElementById('authError').classList.add('hidden');
+    }
+
+    function hideMessages() {
+      document.getElementById('authError').classList.add('hidden');
+      document.getElementById('authSuccess').classList.add('hidden');
+    }
+
+    function togglePasswordVisibility(inputId, btn) {
+      const input = document.getElementById(inputId);
+      const isPassword = input.type === 'password';
+      input.type = isPassword ? 'text' : 'password';
+      btn.textContent = isPassword ? '🙈' : '👁';
+    }
+
+    function checkPasswordStrength(password) {
+      const bars = ['sb1','sb2','sb3','sb4'];
+      const colors = ['bg-red-500', 'bg-orange-500', 'bg-yellow-500', 'bg-emerald-500'];
+      const labels = ['', 'Weak', 'Fair', 'Good', 'Strong'];
+      let score = 0;
+      if (password.length >= 6) score++;
+      if (password.length >= 10) score++;
+      if (/[A-Z]/.test(password) && /[0-9]/.test(password)) score++;
+      if (/[^A-Za-z0-9]/.test(password)) score++;
+      bars.forEach((id, i) => {
+        const el = document.getElementById(id);
+        el.className = `strength-bar flex-1 ${i < score ? colors[score-1] : 'bg-slate-700'}`;
+      });
+      document.getElementById('strengthText').textContent = labels[score] ? `Password strength: ${labels[score]}` : '';
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      hideMessages();
+      const btn = document.getElementById('loginBtn');
+      const btnText = document.getElementById('loginBtnText');
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+      btn.disabled = true;
+      btnText.textContent = 'Signing in...';
+      try {
+        const r = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await r.json();
+        if (!r.ok) { showError(data.error || 'Login failed'); return; }
+        showSuccess('Login successful! Redirecting...');
+        setTimeout(() => window.location.href = '/dashboard', 800);
+      } catch (err) {
+        showError('Network error. Please try again.');
+      } finally {
+        btn.disabled = false;
+        btnText.textContent = 'Sign In to Dashboard';
+      }
+    }
+
+    async function handleRegister(e) {
+      e.preventDefault();
+      hideMessages();
+      const btn = document.getElementById('registerBtn');
+      const btnText = document.getElementById('registerBtnText');
+      const name = document.getElementById('regName').value;
+      const email = document.getElementById('regEmail').value;
+      const password = document.getElementById('regPassword').value;
+      const phone = document.getElementById('regPhone').value;
+      if (password.length < 6) { showError('Password must be at least 6 characters'); return; }
+      btn.disabled = true;
+      btnText.textContent = 'Creating account...';
+      try {
+        const r = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, password, phone })
+        });
+        const data = await r.json();
+        if (!r.ok) { showError(data.error || 'Registration failed'); return; }
+        showSuccess('Account created! Redirecting to dashboard...');
+        setTimeout(() => window.location.href = '/dashboard', 1000);
+      } catch (err) {
+        showError('Network error. Please try again.');
+      } finally {
+        btn.disabled = false;
+        btnText.textContent = 'Create My Account';
+      }
+    }
+  </script>
+</body>
+</html>
