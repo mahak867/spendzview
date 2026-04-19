@@ -1,21 +1,35 @@
 {
-  "name": "spendsense-pro",
+  "name": "spendzview",
   "version": "1.0.0",
-  "description": "SpendSense Pro - Personal Finance, Banking & Life Management System",
+  "description": "Spendzview — Personal Finance, Banking & Life Management System",
   "main": "backend/server.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mahak867/spendzview.git"
+  },
+  "homepage": "https://github.com/mahak867/spendzview#readme",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.0.0",
+    "npm": ">=10.0.0"
+  },
   "scripts": {
     "start": "node backend/server.js",
-    "dev": "nodemon backend/server.js"
+    "dev": "nodemon backend/server.js",
+    "lint": "eslint backend/**/*.js",
+    "test": "echo 'No automated tests yet — contributions welcome!' && exit 0"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
     "csv-parse": "^5.5.3",
+    "dotenv": "^17.4.2",
     "express": "^4.18.2",
     "express-session": "^1.17.3",
     "multer": "^2.1.1",
     "pdfkit": "^0.14.0"
   },
   "devDependencies": {
+    "eslint": "^8.57.1",
     "nodemon": "^3.0.2"
   }
 }
