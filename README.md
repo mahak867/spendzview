@@ -1,8 +1,12 @@
-# SpendSense Pro 💰
+# Spendzview 💰
+
+[![CI](https://github.com/mahak867/spendzview/actions/workflows/ci.yml/badge.svg)](https://github.com/mahak867/spendzview/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D22-brightgreen)](https://nodejs.org)
 
 > Personal Finance, Banking & Life Management System
 
-A production-ready full-stack web application for comprehensive personal finance management.
+A full-stack web application for comprehensive personal finance management built with Node.js, Express, and SQLite.
 
 ## Features
 
@@ -27,9 +31,14 @@ A production-ready full-stack web application for comprehensive personal finance
 ## Tech Stack
 
 - **Frontend**: HTML5, CSS3, JavaScript, Tailwind CSS, Chart.js
-- **Backend**: Node.js, Express.js
-- **Database**: SQLite (better-sqlite3)
+- **Backend**: Node.js ≥ 22, Express.js
+- **Database**: SQLite (built-in `node:sqlite` module — no native addon required)
 - **Authentication**: express-session + bcrypt
+
+## Requirements
+
+- Node.js **≥ 22.0.0**
+- npm **≥ 10.0.0**
 
 ## Setup
 
@@ -48,69 +57,72 @@ cp .env.example .env
 # 4. Start the server
 npm start
 
-# Open in browser
-# http://localhost:3000
+# Open in browser: http://localhost:3000
 ```
 
 ## Development
 
 ```bash
-npm run dev   # Uses nodemon for auto-restart
+npm run dev    # Uses nodemon for auto-restart
+npm run lint   # Run ESLint
 ```
 
 ## Environment Variables
 
 Copy `.env.example` to `.env` and configure:
 
-| Variable         | Default                            | Description                              |
-|------------------|------------------------------------|------------------------------------------|
-| `PORT`           | `3000`                             | Port the server listens on               |
-| `SESSION_SECRET` | *(fallback hardcoded — change it)* | Secret used to sign session cookies      |
+| Variable         | Default                            | Description                                      |
+|------------------|------------------------------------|--------------------------------------------------|
+| `PORT`           | `3000`                             | Port the server listens on                       |
+| `SESSION_SECRET` | *(fallback hardcoded — change it)* | Secret used to sign session cookies              |
+| `NODE_ENV`       | —                                  | Set to `production` to enable secure cookies     |
 
-## Default Demo Account
-
-Register a new account at http://localhost:3000 or use:
-- Email: demo@example.com  
-- Password: demo123
-
-(Create this account via the register form on first run)
+> ⚠️ **Always set a strong `SESSION_SECRET` in production.** See [SECURITY.md](SECURITY.md).
 
 ## Project Structure
 
 ```
-spendsense-pro/
+spendzview/
 ├── backend/
 │   ├── controllers/    # Business logic for each domain
 │   ├── routes/         # Express route definitions
 │   ├── middleware/      # Auth + file upload middleware
-│   ├── models/         # Database connection
+│   ├── models/         # Database connection (node:sqlite)
 │   ├── services/       # CSV parser, PDF export, insights
 │   └── server.js       # Express app entry point
 ├── frontend/
 │   ├── index.html      # Login/Register page
 │   ├── dashboard.html  # Main SPA dashboard
-│   ├── styles.css      # Custom styles
-│   └── app.js          # Frontend JavaScript
+│   └── styles.css      # Custom styles
 ├── database/
-│   └── schema.sql      # SQLite schema
-├── uploads/            # Uploaded files
+│   └── schema.sql      # SQLite schema (auto-applied on first run)
+├── uploads/            # Uploaded files (git-ignored, kept via .gitkeep)
+├── .env.example        # Environment variable template
 └── package.json
 ```
 
 ## API Endpoints
 
-| Domain | Endpoints |
-|--------|-----------|
-| Auth | POST /api/auth/register, /login, /logout, GET /me |
-| Expenses | GET/POST /api/expenses, PUT/DELETE /api/expenses/:id |
-| Budgets | GET/POST /api/budgets, GET /api/budgets/status |
-| Bills | CRUD /api/bills, GET /api/bills/upcoming |
-| Subscriptions | CRUD /api/subscriptions, GET /summary |
-| Banking | CRUD /api/banking, POST /import, GET /transactions |
-| Analytics | GET /api/analytics/monthly, categories, daily |
-| DeepSearch | POST /api/deepsearch/query |
-| Backup | GET /api/backup/export/csv, /export/pdf, /export/json |
+| Domain        | Endpoints                                                       |
+|---------------|-----------------------------------------------------------------|
+| Auth          | POST `/api/auth/register`, `/login`, `/logout`, GET `/me`       |
+| Expenses      | GET/POST `/api/expenses`, PUT/DELETE `/api/expenses/:id`        |
+| Budgets       | GET/POST `/api/budgets`, GET `/api/budgets/status`              |
+| Bills         | CRUD `/api/bills`, GET `/api/bills/upcoming`                    |
+| Subscriptions | CRUD `/api/subscriptions`, GET `/api/subscriptions/summary`     |
+| Banking       | CRUD `/api/banking`, POST `/import`, GET `/transactions`        |
+| Analytics     | GET `/api/analytics/monthly`, `/categories`, `/daily`          |
+| DeepSearch    | POST `/api/deepsearch/query`                                    |
+| Backup        | GET `/api/backup/export/csv`, `/export/pdf`, `/export/json`     |
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Security
+
+See [SECURITY.md](SECURITY.md) for reporting vulnerabilities and deployment best practices.
 
 ## License
 
-MIT
+[MIT](LICENSE)
