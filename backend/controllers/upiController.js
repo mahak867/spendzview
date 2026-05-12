@@ -1,4 +1,6 @@
 const db = require('../models/db');
+const { parseUpiTransaction } = require('../services/upiParser');
+const { createLargeTransactionAlert } = require('../services/notificationService');
 
 exports.generate = (req, res) => {
   try {
@@ -19,10 +21,30 @@ exports.generate = (req, res) => {
 
 exports.savePayment = (req, res) => {
   try {
-    const { upi_id, payee_name, amount, currency, status, transaction_ref, notes, date } = req.body;
+    const { upi_id, payee_name, amount, currency, status, transaction_ref, notes, date, sms_text } = req.body;
     if (!upi_id || !amount) return res.status(400).json({ error: 'UPI ID and amount required' });
-    const result = db.prepare(`INSERT INTO upi_payments (user_id, upi_id, payee_name, amount, currency, status, transaction_ref, notes, date) VALUES (?,?,?,?,?,?,?,?,?)`).run(req.session.userId, upi_id, payee_name || null, parseFloat(amount), currency || 'INR', status || 'pending', transaction_ref || null, notes || null, date || new Date().toISOString().split('T')[0]);
-    res.status(201).json({ payment: db.prepare('SELECT * FROM upi_payments WHERE id=?').get(result.lastInsertRowid) });
+
+    const parsed = sms_text ? parseUpiTransaction(sms_text, amount) : null;
+    const refNo = parsed?.upiRefNo || transaction_ref || null;
+    if (refNo) {
+      const existing = db.prepare('SELECT id FROM upi_payments WHERE user_id=? AND transaction_ref=?').get(req.session.userId, refNo);
+      if (existing) return res.status(409).json({ error: 'UPI transaction already exists' });
+    }
+
+    const result = db.prepare(`INSERT INTO upi_payments (user_id, upi_id, payee_name, amount, currency, status, transaction_ref, notes, date) VALUES (?,?,?,?,?,?,?,?,?)`).run(
+      req.session.userId,
+      parsed?.merchantVpa || upi_id,
+      parsed?.merchantName || payee_name || null,
+      parseFloat(parsed?.amount || amount),
+      currency || 'INR',
+      status || 'pending',
+      refNo,
+      notes || sms_text || null,
+      date || new Date().toISOString().split('T')[0]
+    );
+    const payment = db.prepare('SELECT * FROM upi_payments WHERE id=?').get(result.lastInsertRowid);
+    createLargeTransactionAlert(req.session.userId, { amount: payment.amount, type: 'debit', description: payment.payee_name, date: payment.date });
+    res.status(201).json({ payment });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
@@ -63,9 +85,9 @@ exports.summary = (req, res) => {
     const userId = req.session.userId;
     const now = new Date();
     const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    const total = db.prepare(`SELECT COALESCE(SUM(amount),0) as total, COUNT(*) as count FROM upi_payments WHERE user_id=?`).get(userId);
-    const byStatus = db.prepare(`SELECT status, COUNT(*) as count, SUM(amount) as total FROM upi_payments WHERE user_id=? GROUP BY status`).all(userId);
-    const thisMonth = db.prepare(`SELECT COALESCE(SUM(amount),0) as total FROM upi_payments WHERE user_id=? AND date LIKE ?`).get(userId, `${month}%`);
+    const total = db.prepare('SELECT COALESCE(SUM(amount),0) as total, COUNT(*) as count FROM upi_payments WHERE user_id=?').get(userId);
+    const byStatus = db.prepare('SELECT status, COUNT(*) as count, SUM(amount) as total FROM upi_payments WHERE user_id=? GROUP BY status').all(userId);
+    const thisMonth = db.prepare('SELECT COALESCE(SUM(amount),0) as total FROM upi_payments WHERE user_id=? AND date LIKE ?').get(userId, `${month}%`);
     res.json({ total: total.total, count: total.count, byStatus, thisMonth: thisMonth.total });
   } catch (e) {
     res.status(500).json({ error: e.message });

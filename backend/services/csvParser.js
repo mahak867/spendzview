@@ -1,17 +1,27 @@
 const fs = require('fs');
+const { categorizeByRules } = require('./categorizerService');
 
+/**
+ * Parse a CSV statement into normalized transaction rows.
+ * @param {string} filePath - Uploaded CSV file path.
+ * @returns {Array<{date:string,description:string,amount:number,type:string,balance:number|null}>} Parsed rows.
+ */
 function parseCSV(filePath) {
   const content = fs.readFileSync(filePath, 'utf8');
-  const lines = content.split('\n').filter(l => l.trim());
-  if (lines.length < 2) return [];
+  const lines = content.split('\n').filter((line) => line.trim());
+  if (lines.length < 2) {
+    return [];
+  }
 
-  const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/['"]/g, ''));
+  const headers = lines[0].split(',').map((header) => header.trim().toLowerCase().replace(/['"]/g, ''));
   const rows = [];
 
   const findCol = (...names) => {
     for (const name of names) {
-      const idx = headers.findIndex(h => h.includes(name));
-      if (idx !== -1) return idx;
+      const index = headers.findIndex((header) => header.includes(name));
+      if (index !== -1) {
+        return index;
+      }
     }
     return -1;
   };
@@ -23,56 +33,60 @@ function parseCSV(filePath) {
   const creditIdx = findCol('credit', 'deposit');
   const balIdx = findCol('balance', 'closing balance');
 
-  for (let i = 1; i < lines.length; i++) {
-    const cols = lines[i].split(',').map(c => c.trim().replace(/^["']|["']$/g, ''));
-    if (cols.length < 2) continue;
+  for (let lineIndex = 1; lineIndex < lines.length; lineIndex += 1) {
+    const cols = lines[lineIndex].split(',').map((column) => column.trim().replace(/^["']|["']$/g, ''));
+    if (cols.length < 2) {
+      continue;
+    }
 
     let amount = 0;
     let type = 'debit';
 
+    const description = descIdx !== -1 ? cols[descIdx] : '';
+
     if (amtIdx !== -1) {
-      const val = parseFloat(cols[amtIdx]?.replace(/[^0-9.-]/g, '') || '0');
-      amount = Math.abs(val);
-      type = val < 0 ? 'debit' : 'credit';
+      const value = Number.parseFloat((cols[amtIdx] || '0').replace(/[^0-9.-]/g, ''));
+      amount = Math.abs(value);
+      if (value < 0) {
+        type = 'debit';
+      } else if (/credit|credited|salary|refund|interest|cashback|deposit|received/i.test(description)) {
+        type = 'credit';
+      } else {
+        type = 'debit';
+      }
     } else if (debitIdx !== -1 || creditIdx !== -1) {
-      const debit = parseFloat(cols[debitIdx]?.replace(/[^0-9.]/g, '') || '0');
-      const credit = parseFloat(cols[creditIdx]?.replace(/[^0-9.]/g, '') || '0');
-      if (debit > 0) { amount = debit; type = 'debit'; }
-      else if (credit > 0) { amount = credit; type = 'credit'; }
+      const debit = Number.parseFloat((cols[debitIdx] || '0').replace(/[^0-9.]/g, ''));
+      const credit = Number.parseFloat((cols[creditIdx] || '0').replace(/[^0-9.]/g, ''));
+      if (debit > 0) {
+        amount = debit;
+        type = 'debit';
+      } else if (credit > 0) {
+        amount = credit;
+        type = 'credit';
+      }
     }
 
     const rawDate = dateIdx !== -1 ? cols[dateIdx] : '';
-    let date = rawDate;
-    // Try to parse common date formats
-    const d = new Date(rawDate);
-    if (!isNaN(d.getTime())) {
-      date = d.toISOString().split('T')[0];
-    }
-
+    const parsedDate = new Date(rawDate);
     rows.push({
-      date,
-      description: descIdx !== -1 ? cols[descIdx] : '',
+      date: Number.isNaN(parsedDate.getTime()) ? rawDate : parsedDate.toISOString().split('T')[0],
+      description,
       amount,
       type,
-      balance: balIdx !== -1 ? parseFloat(cols[balIdx]?.replace(/[^0-9.]/g, '') || '0') : null
+      balance: balIdx !== -1 ? Number.parseFloat((cols[balIdx] || '0').replace(/[^0-9.]/g, '')) : null
     });
   }
 
-  return rows.filter(r => r.amount > 0 && r.date);
+  return rows.filter((row) => row.amount > 0 && row.date);
 }
 
+/**
+ * Preserve the legacy auto-category helper for existing imports.
+ * @param {string} description - Transaction narration.
+ * @returns {string} Rule-based category.
+ */
 function autoCategory(description) {
-  const d = (description || '').toLowerCase();
-  if (/swiggy|zomato|uber\s*eat|food|restaurant|cafe|domino|mcdonald|pizza|kfc/.test(d)) return 'Food';
-  if (/uber|ola|rapido|cab|taxi|metro|bus|train|flight|railway/.test(d)) return 'Transport';
-  if (/netflix|spotify|amazon\s*prime|hotstar|youtube|disney|hbo|apple\s*tv/.test(d)) return 'Entertainment';
-  if (/hospital|medical|pharmacy|apollo|doctor|clinic|health|medicine/.test(d)) return 'Health';
-  if (/electricity|water|gas|internet|broadband|airtel|jio|bsnl|mobile|recharge/.test(d)) return 'Bills';
-  if (/amazon|flipkart|myntra|nykaa|meesho|shop|store|mall/.test(d)) return 'Shopping';
-  if (/school|college|university|tuition|course|udemy|coursera|book/.test(d)) return 'Education';
-  if (/insurance|lic|policy|premium/.test(d)) return 'Insurance';
-  if (/salary|credited|neft|imps|rtgs/.test(d)) return 'Income';
-  return 'Other';
+  return categorizeByRules(description, description) || 'Other';
 }
 
 module.exports = { parseCSV, autoCategory };

@@ -135,6 +135,79 @@
           <div class="text-xs text-slate-500 mt-1" id="dashSavingsGoals">0 goals</div>
         </div>
       </div>
+      <div class="grid-cols-2 mb-5">
+        <div class="section-card">
+          <div class="flex items-center justify-between px-5 py-3 border-b border-slate-700">
+            <div>
+              <h3 class="font-semibold text-sm text-slate-300">Linked Accounts</h3>
+              <p class="text-xs text-slate-500 mt-1">Live balances from Setu and manual accounts</p>
+            </div>
+            <div class="flex gap-2">
+              <button class="btn-secondary btn-sm" onclick="linkBankAccount()">🔗 Link Setu</button>
+              <button class="btn-primary btn-sm" onclick="syncBankAccounts()">↻ Sync</button>
+            </div>
+          </div>
+          <div class="p-4 space-y-3" id="dashboardLinkedAccounts">
+            <div class="text-center py-6 text-slate-500 text-sm">No linked accounts yet</div>
+          </div>
+        </div>
+        <div class="section-card">
+          <div class="px-5 py-3 border-b border-slate-700">
+            <h3 class="font-semibold text-sm text-slate-300">Net Worth</h3>
+          </div>
+          <div class="p-5">
+            <div class="flex items-start justify-between gap-4 mb-4">
+              <div>
+                <div class="text-xs uppercase tracking-wide text-slate-500 mb-1">Total Net Worth</div>
+                <div class="text-3xl font-bold text-white" id="netWorthTotal">₹0</div>
+                <div class="text-xs text-slate-500 mt-1">Accounts + savings goals progress</div>
+              </div>
+              <div class="text-right">
+                <div class="text-xs text-slate-500">Liquid Balance</div>
+                <div class="text-lg font-semibold text-emerald-400" id="netWorthBalanceTotal">₹0</div>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4 mb-4">
+              <div class="p-3 rounded-xl bg-slate-800/60 border border-slate-700">
+                <div class="text-xs text-slate-500 mb-1">Savings Progress</div>
+                <div class="text-lg font-semibold text-violet-400" id="netWorthSavingsTotal">₹0</div>
+              </div>
+              <div class="p-3 rounded-xl bg-slate-800/60 border border-slate-700">
+                <div class="text-xs text-slate-500 mb-1">Goal Completion</div>
+                <div class="text-lg font-semibold text-white" id="netWorthProgressText">0%</div>
+              </div>
+            </div>
+            <div class="progress-wrap"><div class="progress-bar progress-blue" id="netWorthProgressBar" style="width:0%"></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="section-card mb-5">
+        <div class="flex flex-col gap-3 px-5 py-3 border-b border-slate-700 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h3 class="font-semibold text-sm text-slate-300">Recent Transactions Feed</h3>
+            <p class="text-xs text-slate-500 mt-1">Bank + UPI activity with categories and merchant hints</p>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <select class="form-select w-36" id="dashboardTxSource">
+              <option value="all">All Sources</option>
+              <option value="bank">Bank</option>
+              <option value="upi">UPI</option>
+            </select>
+            <input type="text" class="form-input w-44" id="dashboardTxSearch" placeholder="Search merchant...">
+            <button class="btn-secondary btn-sm" onclick="refreshTransactionFeed()">Apply</button>
+          </div>
+        </div>
+        <div class="divide-y divide-slate-800" id="dashboardRecentTransactions">
+          <div class="text-center py-6 text-slate-500 text-sm">No recent transactions yet</div>
+        </div>
+        <div class="flex items-center justify-between px-5 py-3 border-t border-slate-700">
+          <span class="text-xs text-slate-500" id="dashboardTxPaginationInfo">0 records</span>
+          <div class="flex gap-2">
+            <button class="btn-secondary btn-sm" id="dashboardTxPrev" onclick="changeDashboardTxPage(-1)" disabled>← Prev</button>
+            <button class="btn-secondary btn-sm" id="dashboardTxNext" onclick="changeDashboardTxPage(1)" disabled>Next →</button>
+          </div>
+        </div>
+      </div>
       <!-- Charts row -->
       <div class="grid-cols-2 mb-5">
         <div class="chart-card">
@@ -416,7 +489,9 @@
     <section id="section-banking" class="page-section">
       <div class="section-header">
         <div><h2 class="section-title">Banking</h2><p class="section-subtitle">Manage accounts and transactions</p></div>
-        <div class="flex gap-2">
+        <div class="flex gap-2 flex-wrap">
+          <button class="btn-secondary btn-sm" onclick="linkBankAccount()">🔗 Link Setu</button>
+          <button class="btn-secondary btn-sm" onclick="syncBankAccounts()">↻ Sync Now</button>
           <button class="btn-secondary btn-sm" onclick="openImportModal()">📂 Import CSV</button>
           <button class="btn-primary" onclick="openBankModal()">+ Add Account</button>
         </div>
@@ -429,15 +504,15 @@
         <input type="date" class="form-input w-36" id="txDateFrom">
         <input type="date" class="form-input w-36" id="txDateTo">
         <select class="form-select w-36" id="txType"><option value="">All Types</option><option value="credit">Credit</option><option value="debit">Debit</option></select>
-        <select class="form-select w-40" id="txCategory"><option value="">All Categories</option><option>Food</option><option>Transport</option><option>Shopping</option><option>Bills</option><option>Health</option><option>Education</option><option>Entertainment</option><option>Other</option><option>Income</option></select>
+        <select class="form-select w-40" id="txCategory"><option value="">All Categories</option><option>Food</option><option>Transport</option><option>Shopping</option><option>Bills</option><option>Health</option><option>Education</option><option>Entertainment</option><option>Subscription</option><option>Other</option><option>Income</option></select>
         <input type="text" class="form-input flex-1 min-w-36" id="txSearch" placeholder="Search transactions...">
         <button class="btn-primary btn-sm" onclick="loadTransactions()">Filter</button>
       </div>
       <div class="section-card">
         <div class="table-wrap">
           <table class="data-table" id="transactionsTable">
-            <thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Type</th><th>Amount</th><th>Balance</th><th>Dup?</th></tr></thead>
-            <tbody><tr><td colspan="7" class="empty-state"><div class="empty-icon">🏛️</div>No transactions. Add bank account and import a CSV.</td></tr></tbody>
+            <thead><tr><th>Date</th><th>Description</th><th>Source</th><th>Category</th><th>Type</th><th>Amount</th><th>Balance</th><th>Ref</th></tr></thead>
+            <tbody><tr><td colspan="8" class="empty-state"><div class="empty-icon">🏛️</div>No transactions. Link an account or import a CSV.</td></tr></tbody>
           </table>
         </div>
       </div>

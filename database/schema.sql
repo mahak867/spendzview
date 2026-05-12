@@ -235,3 +235,71 @@ CREATE TABLE IF NOT EXISTS documents (
 CREATE INDEX IF NOT EXISTS idx_expenses_user_date ON expenses(user_id, date);
 CREATE INDEX IF NOT EXISTS idx_transactions_user ON transactions(user_id);
 CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id, is_read);
+
+CREATE TABLE IF NOT EXISTS setu_consents (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  consent_id TEXT,
+  consent_handle TEXT,
+  phone_number TEXT,
+  status TEXT DEFAULT 'pending',
+  consent_url TEXT,
+  redirect_url TEXT,
+  requested_at DATETIME,
+  approved_at DATETIME,
+  last_synced_at DATETIME,
+  last_error TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+CREATE TABLE IF NOT EXISTS bank_account_links (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  bank_account_id INTEGER NOT NULL UNIQUE,
+  provider TEXT NOT NULL,
+  provider_account_id TEXT,
+  consent_id INTEGER,
+  masked_account_number TEXT,
+  status TEXT DEFAULT 'linked',
+  live_balance REAL DEFAULT 0,
+  live_balance_at DATETIME,
+  raw_payload TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id),
+  FOREIGN KEY (bank_account_id) REFERENCES bank_accounts(id),
+  FOREIGN KEY (consent_id) REFERENCES setu_consents(id)
+);
+
+CREATE TABLE IF NOT EXISTS bank_raw_transactions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  transaction_id INTEGER,
+  bank_account_id INTEGER,
+  consent_id INTEGER,
+  provider TEXT NOT NULL,
+  provider_transaction_id TEXT,
+  reference_number TEXT,
+  merchant_name TEXT,
+  merchant_vpa TEXT,
+  upi_ref_no TEXT,
+  amount REAL NOT NULL,
+  type TEXT NOT NULL,
+  category TEXT,
+  date TEXT NOT NULL,
+  balance_after REAL,
+  raw_payload TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id),
+  FOREIGN KEY (transaction_id) REFERENCES transactions(id),
+  FOREIGN KEY (bank_account_id) REFERENCES bank_accounts(id),
+  FOREIGN KEY (consent_id) REFERENCES setu_consents(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_setu_consents_user ON setu_consents(user_id, status);
+CREATE INDEX IF NOT EXISTS idx_bank_account_links_user ON bank_account_links(user_id, provider);
+CREATE INDEX IF NOT EXISTS idx_bank_raw_transactions_user_date ON bank_raw_transactions(user_id, date);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_bank_raw_transactions_provider_txn ON bank_raw_transactions(user_id, provider, provider_transaction_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_upi_transaction_ref_unique ON upi_payments(user_id, transaction_ref) WHERE transaction_ref IS NOT NULL AND transaction_ref != '';
