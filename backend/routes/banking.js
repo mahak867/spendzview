@@ -3,6 +3,9 @@ const ctrl = require('../controllers/bankingController');
 const requireAuth = require('../middleware/auth');
 const { uploadStatement } = require('../middleware/upload');
 
+router.post('/link', requireAuth, ctrl.linkAccount);
+router.get('/callback', ctrl.handleCallback);
+router.post('/sync', requireAuth, ctrl.syncAccounts);
 router.get('/accounts', requireAuth, ctrl.listAccounts);
 router.post('/accounts', requireAuth, ctrl.addAccount);
 router.put('/accounts/:id', requireAuth, ctrl.updateAccount);

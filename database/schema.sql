@@ -235,3 +235,56 @@ CREATE TABLE IF NOT EXISTS documents (
 CREATE INDEX IF NOT EXISTS idx_expenses_user_date ON expenses(user_id, date);
 CREATE INDEX IF NOT EXISTS idx_transactions_user ON transactions(user_id);
 CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id, is_read);
+CREATE TABLE IF NOT EXISTS bank_consents (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  provider TEXT NOT NULL DEFAULT 'setu',
+  consent_id TEXT,
+  state_token TEXT UNIQUE,
+  status TEXT DEFAULT 'pending',
+  consent_url TEXT,
+  redirect_url TEXT,
+  metadata_json TEXT,
+  last_error TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+CREATE TABLE IF NOT EXISTS bank_account_links (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  bank_account_id INTEGER NOT NULL,
+  user_id INTEGER NOT NULL,
+  provider TEXT NOT NULL DEFAULT 'setu',
+  provider_account_id TEXT NOT NULL,
+  consent_id TEXT,
+  status TEXT DEFAULT 'linked',
+  masked_account_number TEXT,
+  account_type TEXT,
+  last_balance REAL,
+  last_balance_at DATETIME,
+  metadata_json TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (bank_account_id) REFERENCES bank_accounts(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id),
+  UNIQUE (provider, provider_account_id)
+);
+
+CREATE TABLE IF NOT EXISTS raw_bank_transactions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  bank_account_id INTEGER NOT NULL,
+  provider TEXT NOT NULL DEFAULT 'setu',
+  provider_transaction_id TEXT NOT NULL,
+  reference_number TEXT,
+  raw_payload TEXT NOT NULL,
+  fetched_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id),
+  FOREIGN KEY (bank_account_id) REFERENCES bank_accounts(id) ON DELETE CASCADE,
+  UNIQUE (provider, provider_transaction_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_bank_consents_user ON bank_consents(user_id, status);
+CREATE INDEX IF NOT EXISTS idx_bank_links_user ON bank_account_links(user_id, provider);
+CREATE INDEX IF NOT EXISTS idx_raw_bank_transactions_account ON raw_bank_transactions(bank_account_id, fetched_at);

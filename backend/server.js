@@ -7,6 +7,7 @@ const app = express();
 
 // Initialize DB on startup
 require('./models/db');
+const { startSyncScheduler } = require('./services/syncScheduler');
 
 // Middleware
 app.use(express.json({ limit: '10mb' }));
@@ -62,4 +63,7 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`SpendSense Pro running on http://localhost:${PORT}`));
+app.listen(PORT, () => {
+  startSyncScheduler();
+  console.log(`SpendSense Pro running on http://localhost:${PORT}`);
+});
