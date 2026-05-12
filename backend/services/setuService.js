@@ -1,5 +1,6 @@
 const DEFAULT_BASE_URL = 'https://fiu-sandbox.setu.co';
 const REQUEST_TIMEOUT_MS = 20000;
+const RETRYABLE_STATUS_CODES = new Set([404, 405]);
 
 const PATHS = {
   createConsent: ['/api/consents', '/api/aa/consents', '/consents'],
@@ -115,7 +116,7 @@ async function requestCandidates(method, paths, body) {
       return await request(method, path, body);
     } catch (error) {
       lastError = error;
-      if (error.status && ![404, 405].includes(error.status)) {
+      if (error.status && !RETRYABLE_STATUS_CODES.has(error.status)) {
         break;
       }
     }

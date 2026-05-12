@@ -2,6 +2,8 @@ const cron = require('node-cron');
 const db = require('../models/db');
 const { syncUserLinkedAccounts } = require('./bankingSyncService');
 
+const DEFAULT_SYNC_CRON = process.env.BANK_SYNC_CRON || '0 6 * * *';
+
 let schedulerStarted = false;
 let isRunning = false;
 
@@ -36,7 +38,7 @@ function startSyncScheduler() {
     return;
   }
 
-  cron.schedule('0 6 * * *', () => {
+  cron.schedule(DEFAULT_SYNC_CRON, () => {
     runScheduledSync().catch((error) => console.error('Daily sync failed:', error));
   });
   schedulerStarted = true;

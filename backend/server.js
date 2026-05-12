@@ -65,5 +65,5 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   startSyncScheduler();
-  console.log(`SpendSense Pro running on http://localhost:${PORT}`);
+  console.log(`Spendzview running on http://localhost:${PORT}`);
 });

@@ -27,6 +27,8 @@ const CATEGORY_ICON_MAP = {
   Other: '🏦'
 };
 
+const DEEPSEARCH_CATEGORY_LIST = Object.keys(CATEGORY_ICON_MAP).join(', ');
+
 /**
  * Normalizes merchant or narration text.
  * @param {string} text
@@ -118,7 +120,7 @@ async function queryDeepSearchCategory(description, cookie) {
       Cookie: cookie
     },
     body: JSON.stringify({
-      query: `Classify merchant "${description}" into exactly one category: Food, Travel, Subscription, Shopping, Bills, Health, Education, Insurance, Income, Entertainment, Transport, Other.`
+      query: `Classify merchant "${description}" into exactly one category: ${DEEPSEARCH_CATEGORY_LIST}.`
     })
   });
 

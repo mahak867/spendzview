@@ -8,6 +8,8 @@ const {
   createSyncFailedNotification
 } = require('./notificationService');
 
+const LOW_BALANCE_THRESHOLD = 500;
+
 /**
  * Returns today's date in YYYY-MM-DD format.
  * @returns {string}
@@ -237,7 +239,7 @@ async function syncUserLinkedAccounts(userId, options = {}) {
           db.prepare(`UPDATE bank_account_links SET last_balance=?, last_balance_at=CURRENT_TIMESTAMP, updated_at=CURRENT_TIMESTAMP WHERE id=?`).run(balance.balance, account.linkId);
 
           const accountRow = db.prepare('SELECT * FROM bank_accounts WHERE id=?').get(account.bankAccountId);
-          if (balance.balance < 500) {
+          if (balance.balance < LOW_BALANCE_THRESHOLD) {
             createLowBalanceNotification(userId, accountRow);
           }
 

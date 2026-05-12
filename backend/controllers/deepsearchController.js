@@ -1,6 +1,7 @@
 const db = require('../models/db');
 const { categorizeDescriptionSync } = require('../services/categorizerService');
 
+// Two standard deviations captures roughly 95% of normal spending behavior.
 const STANDARD_DEVIATION_THRESHOLD = 2;
 
 /**

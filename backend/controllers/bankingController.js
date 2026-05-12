@@ -15,6 +15,8 @@ const {
   syncUserLinkedAccounts
 } = require('../services/bankingSyncService');
 
+const MAX_TRANSACTION_QUERY_ROWS = 500;
+
 /**
  * Creates a deterministic duplicate check for UPI transactions.
  * @param {number} userId
@@ -169,7 +171,7 @@ exports.listTransactions = (req, res) => {
     if (endDate) { bankSql += ' AND t.date<=?'; bankParams.push(endDate); }
     if (type) { bankSql += ' AND t.type=?'; bankParams.push(type); }
     if (search) { bankSql += ' AND t.description LIKE ?'; bankParams.push(`%${search}%`); }
-    bankSql += ' ORDER BY t.date DESC, t.created_at DESC LIMIT 500';
+    bankSql += ` ORDER BY t.date DESC, t.created_at DESC LIMIT ${MAX_TRANSACTION_QUERY_ROWS}`;
 
     const bankRows = db.prepare(bankSql).all(...bankParams).map((row) => ({
       ...row,
@@ -183,7 +185,7 @@ exports.listTransactions = (req, res) => {
     if (startDate) { upiSql += ' AND date>=?'; upiParams.push(startDate); }
     if (endDate) { upiSql += ' AND date<=?'; upiParams.push(endDate); }
     if (search) { upiSql += ' AND (payee_name LIKE ? OR upi_id LIKE ? OR notes LIKE ?)'; const like = `%${search}%`; upiParams.push(like, like, like); }
-    upiSql += ' ORDER BY date DESC, created_at DESC LIMIT 500';
+    upiSql += ` ORDER BY date DESC, created_at DESC LIMIT ${MAX_TRANSACTION_QUERY_ROWS}`;
 
     const upiRows = bank_account_id
       ? []
