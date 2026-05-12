@@ -1,6 +1,8 @@
 const db = require('../models/db');
 const { categorizeDescriptionSync } = require('../services/categorizerService');
 
+const STANDARD_DEVIATION_THRESHOLD = 2;
+
 /**
  * Calculates the standard deviation for numeric values.
  * @param {number[]} values
@@ -32,7 +34,7 @@ exports.query = (req, res) => {
     let summary = '';
     let recommendations = [];
 
-    if (/classify merchant|exactly one category|merchant .*category/.test(q)) {
+    if (q.includes('classify merchant') || q.includes('exactly one category') || (q.includes('merchant') && q.includes('category'))) {
       intent = 'merchant_category';
       const merchantMatch = query.match(/merchant\s+"([^"]+)"/i) || query.match(/merchant\s+'([^']+)'/i);
       const merchant = merchantMatch ? merchantMatch[1] : query;
@@ -58,7 +60,7 @@ exports.query = (req, res) => {
       const expenses = db.prepare('SELECT amount, description, date FROM expenses WHERE user_id=?').all(userId);
       const avg = expenses.length ? expenses.reduce((sum, item) => sum + item.amount, 0) / expenses.length : 0;
       const deviation = standardDeviation(expenses.map((item) => item.amount));
-      const threshold = avg + (deviation * 2);
+      const threshold = avg + (deviation * STANDARD_DEVIATION_THRESHOLD);
       const unusual = threshold > 0 ? expenses.filter((item) => item.amount > threshold).sort((left, right) => right.amount - left.amount).slice(0, 10) : [];
       results = unusual.map((item) => ({ label: item.description || 'Expense', value: `₹${item.amount.toFixed(2)} on ${item.date}`, type: 'expense', data: item }));
       summary = threshold > 0 ? `Found ${unusual.length} transactions significantly above your average spending of ₹${avg.toFixed(2)}.` : 'Not enough data to detect unusual transactions.';

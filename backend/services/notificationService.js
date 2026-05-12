@@ -59,9 +59,9 @@ function createLargeTransactionNotification(userId, transaction) {
  * @returns {boolean}
  */
 function createLowBalanceNotification(userId, account) {
-  const suffix = `${account.account_number || ''}`.replace(/\D/g, '').slice(-4);
+  const lastFourDigits = `${account.account_number || ''}`.replace(/\D/g, '').slice(-4);
   const title = `Low balance warning: ${account.bank_name || 'Linked account'}`;
-  const masked = suffix ? ` ••••${suffix}` : '';
+  const masked = lastFourDigits ? ` ••••${lastFourDigits}` : '';
   return createNotification(
     userId,
     'low_balance',

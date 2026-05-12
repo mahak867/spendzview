@@ -206,7 +206,7 @@ function mapTransactions(payload) {
  */
 async function initiateConsent(input = {}) {
   const now = new Date();
-  const fromDate = input.fromDate || new Date(now.getFullYear(), now.getMonth() - 6, now.getDate()).toISOString().split('T')[0];
+  const fromDate = input.fromDate || new Date(now.getTime() - (180 * 86400000)).toISOString().split('T')[0];
   const toDate = input.toDate || now.toISOString().split('T')[0];
   const payload = {
     redirectUrl: input.redirectUrl || process.env.SETU_REDIRECT_URL,

@@ -194,7 +194,7 @@ exports.listTransactions = (req, res) => {
           user_id: payment.user_id,
           bank_account_id: null,
           amount: payment.amount,
-          type: type && type !== 'debit' ? payment.status : 'debit',
+          type: payment.status === 'refunded' ? 'credit' : 'debit',
           description: payment.notes || payment.payee_name || payment.upi_id,
           category: classification.category,
           date: payment.date,
@@ -349,7 +349,7 @@ exports.handleCallback = async (req, res) => {
         createSyncFailedNotification(consentRow.user_id, e.message);
       }
     }
-    res.status(500).send(e.message);
+    res.redirect('/dashboard?section=banking&status=failed');
   }
 };
 

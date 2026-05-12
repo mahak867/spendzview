@@ -151,7 +151,7 @@ function upsertUpiPayment(userId, parsedUpi, transaction) {
     parsedUpi.merchantName || transaction.description || 'UPI Payment',
     Number.parseFloat(parsedUpi.amount || transaction.amount) || 0,
     'INR',
-    transaction.type === 'credit' ? 'completed' : 'completed',
+    'completed',
     parsedUpi.referenceNumber,
     transaction.description || null,
     transaction.date
