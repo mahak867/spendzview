@@ -415,30 +415,68 @@
     <!-- ===== BANKING ===== -->
     <section id="section-banking" class="page-section">
       <div class="section-header">
-        <div><h2 class="section-title">Banking</h2><p class="section-subtitle">Manage accounts and transactions</p></div>
-        <div class="flex gap-2">
+        <div><h2 class="section-title">Banking</h2><p class="section-subtitle">Manage linked accounts, sync live balances, and review recent activity.</p></div>
+        <div class="flex gap-2 flex-wrap">
+          <button class="btn-secondary btn-sm" onclick="syncLinkedAccounts()">🔄 Sync Now</button>
+          <button class="btn-secondary btn-sm" onclick="startSetuLink()">🏦 Link with Setu</button>
           <button class="btn-secondary btn-sm" onclick="openImportModal()">📂 Import CSV</button>
           <button class="btn-primary" onclick="openBankModal()">+ Add Account</button>
         </div>
       </div>
-      <div id="bankAccountsList" class="grid-cols-3 mb-5"></div>
-      <div class="section-header mb-3">
-        <h3 class="font-semibold text-slate-300">Transactions</h3>
+      <div class="grid-cols-3 mb-5">
+        <div class="stat-card">
+          <div class="flex items-center justify-between mb-2"><span class="text-slate-400 text-xs font-medium uppercase tracking-wide">Linked Accounts</span><span class="text-2xl">🏦</span></div>
+          <div class="text-2xl font-bold text-white" id="linkedAccountsCount">0</div>
+          <div class="text-xs text-slate-500 mt-1">Manual + Setu linked accounts</div>
+        </div>
+        <div class="stat-card">
+          <div class="flex items-center justify-between mb-2"><span class="text-slate-400 text-xs font-medium uppercase tracking-wide">Live Balance</span><span class="text-2xl">💳</span></div>
+          <div class="text-2xl font-bold text-emerald-400" id="bankingLiveBalance">₹0</div>
+          <div class="text-xs text-slate-500 mt-1">Across all bank accounts</div>
+        </div>
+        <div class="stat-card">
+          <div class="flex items-center justify-between mb-2"><span class="text-slate-400 text-xs font-medium uppercase tracking-wide">Net Worth</span><span class="text-2xl">📈</span></div>
+          <div class="text-2xl font-bold text-violet-400" id="bankingNetWorth">₹0</div>
+          <div class="text-xs text-slate-500 mt-1" id="bankingSavingsProgress">Savings goals progress: 0%</div>
+          <div class="progress-wrap mt-2"><div class="progress-bar progress-blue" id="bankingSavingsBar" style="width:0%"></div></div>
+        </div>
       </div>
-      <div class="filter-bar mb-4 flex flex-wrap gap-3">
-        <input type="date" class="form-input w-36" id="txDateFrom">
-        <input type="date" class="form-input w-36" id="txDateTo">
-        <select class="form-select w-36" id="txType"><option value="">All Types</option><option value="credit">Credit</option><option value="debit">Debit</option></select>
-        <select class="form-select w-40" id="txCategory"><option value="">All Categories</option><option>Food</option><option>Transport</option><option>Shopping</option><option>Bills</option><option>Health</option><option>Education</option><option>Entertainment</option><option>Other</option><option>Income</option></select>
-        <input type="text" class="form-input flex-1 min-w-36" id="txSearch" placeholder="Search transactions...">
-        <button class="btn-primary btn-sm" onclick="loadTransactions()">Filter</button>
-      </div>
-      <div class="section-card">
-        <div class="table-wrap">
-          <table class="data-table" id="transactionsTable">
-            <thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Type</th><th>Amount</th><th>Balance</th><th>Dup?</th></tr></thead>
-            <tbody><tr><td colspan="7" class="empty-state"><div class="empty-icon">🏛️</div>No transactions. Add bank account and import a CSV.</td></tr></tbody>
-          </table>
+      <div class="grid-cols-2 mb-5">
+        <div class="section-card">
+          <div class="px-5 py-3 border-b border-slate-700 flex items-center justify-between">
+            <h3 class="font-semibold text-sm text-white">Linked Accounts</h3>
+            <span class="text-xs text-slate-400" id="linkedAccountsUpdatedAt">Awaiting sync</span>
+          </div>
+          <div class="p-5">
+            <div id="bankAccountsList" class="grid-cols-2"></div>
+          </div>
+        </div>
+        <div class="section-card">
+          <div class="px-5 py-3 border-b border-slate-700 flex items-center justify-between">
+            <h3 class="font-semibold text-sm text-white">Recent Transactions Feed</h3>
+            <span class="text-xs text-slate-400" id="transactionsPageMeta">Page 1</span>
+          </div>
+          <div class="p-5">
+            <div class="filter-bar mb-4 flex flex-wrap gap-3">
+              <input type="date" class="form-input w-36" id="txDateFrom">
+              <input type="date" class="form-input w-36" id="txDateTo">
+              <select class="form-select w-36" id="txType"><option value="">All Types</option><option value="credit">Credit</option><option value="debit">Debit</option></select>
+              <select class="form-select w-40" id="txCategory"><option value="">All Categories</option><option>Food</option><option>Transport</option><option>Travel</option><option>Shopping</option><option>Bills</option><option>Health</option><option>Education</option><option>Entertainment</option><option>Subscription</option><option>Insurance</option><option>Income</option><option>Other</option></select>
+              <input type="text" class="form-input flex-1 min-w-36" id="txSearch" placeholder="Search merchant, account, UPI ref...">
+              <button class="btn-primary btn-sm" onclick="loadTransactions(1)">Filter</button>
+            </div>
+            <div class="table-wrap">
+              <table class="data-table" id="transactionsTable">
+                <thead><tr><th>Date</th><th>Merchant</th><th>Category</th><th>Source</th><th>Amount</th><th>Balance</th><th>Status</th></tr></thead>
+                <tbody><tr><td colspan="7" class="empty-state"><div class="empty-icon">🏛️</div>No transactions yet. Sync Setu or import a CSV.</td></tr></tbody>
+              </table>
+            </div>
+            <div class="flex items-center justify-between mt-4 gap-3">
+              <button class="btn-secondary btn-sm" id="txPrevBtn" onclick="changeTransactionsPage(-1)">← Previous</button>
+              <div class="text-xs text-slate-400" id="txResultsMeta">0 results</div>
+              <button class="btn-secondary btn-sm" id="txNextBtn" onclick="changeTransactionsPage(1)">Next →</button>
+            </div>
+          </div>
         </div>
       </div>
     </section>

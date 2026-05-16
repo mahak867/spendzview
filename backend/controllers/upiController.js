@@ -10,7 +10,7 @@ exports.generate = (req, res) => {
     const upiLink = `upi://pay?pa=${upi_id}&pn=${pn}&am=${amount}&cu=${cur}&tn=${tn}`;
     const qrData = `UPI:${upi_id}|${payee_name || ''}|${amount}|${cur}`;
     const today = new Date().toISOString().split('T')[0];
-    const result = db.prepare(`INSERT INTO upi_payments (user_id, upi_id, payee_name, amount, currency, status, upi_link, qr_data, notes, date) VALUES (?,?,?,?,?,?,?,?,?,?)`).run(req.session.userId, upi_id, payee_name || null, parseFloat(amount), cur, 'generated', upiLink, qrData, notes || null, today);
+    const result = db.prepare(`INSERT INTO upi_payments (user_id, upi_id, payee_name, amount, currency, status, upi_link, qr_data, notes, date) VALUES (?,?,?,?,?,?,?,?,?,?)`).run(req.session.userId, upi_id, payee_name || null, Number.parseFloat(amount), cur, 'generated', upiLink, qrData, notes || null, today);
     res.json({ upiLink, qrData, paymentId: result.lastInsertRowid });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -21,7 +21,13 @@ exports.savePayment = (req, res) => {
   try {
     const { upi_id, payee_name, amount, currency, status, transaction_ref, notes, date } = req.body;
     if (!upi_id || !amount) return res.status(400).json({ error: 'UPI ID and amount required' });
-    const result = db.prepare(`INSERT INTO upi_payments (user_id, upi_id, payee_name, amount, currency, status, transaction_ref, notes, date) VALUES (?,?,?,?,?,?,?,?,?)`).run(req.session.userId, upi_id, payee_name || null, parseFloat(amount), currency || 'INR', status || 'pending', transaction_ref || null, notes || null, date || new Date().toISOString().split('T')[0]);
+    if (transaction_ref) {
+      const existing = db.prepare('SELECT * FROM upi_payments WHERE user_id=? AND transaction_ref=?').get(req.session.userId, transaction_ref);
+      if (existing) {
+        return res.json({ payment: existing, duplicate: true });
+      }
+    }
+    const result = db.prepare(`INSERT INTO upi_payments (user_id, upi_id, payee_name, amount, currency, status, transaction_ref, notes, date) VALUES (?,?,?,?,?,?,?,?,?)`).run(req.session.userId, upi_id, payee_name || null, Number.parseFloat(amount), currency || 'INR', status || 'pending', transaction_ref || null, notes || null, date || new Date().toISOString().split('T')[0]);
     res.status(201).json({ payment: db.prepare('SELECT * FROM upi_payments WHERE id=?').get(result.lastInsertRowid) });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -51,6 +57,10 @@ exports.updateStatus = (req, res) => {
     const { status, transaction_ref } = req.body;
     const validStatuses = ['pending', 'completed', 'failed', 'refunded', 'generated'];
     if (!validStatuses.includes(status)) return res.status(400).json({ error: 'Invalid status' });
+    if (transaction_ref) {
+      const existing = db.prepare('SELECT id FROM upi_payments WHERE user_id=? AND transaction_ref=? AND id!=?').get(req.session.userId, transaction_ref, id);
+      if (existing) return res.status(409).json({ error: 'Duplicate UPI reference number' });
+    }
     db.prepare('UPDATE upi_payments SET status=?, transaction_ref=COALESCE(?,transaction_ref) WHERE id=?').run(status, transaction_ref || null, id);
     res.json({ payment: db.prepare('SELECT * FROM upi_payments WHERE id=?').get(id) });
   } catch (e) {
